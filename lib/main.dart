@@ -1,5 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:wgit/services/app_management_service.dart';
+import 'package:wgit/services/firebase/firebase_service.dart';
 
 import 'drawer/drawer.dart';
 import 'firebase_options.dart';
@@ -9,6 +11,9 @@ void main() async{
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  FirebaseService.ensureInitialized();
+
+  await AppManager.ensureInitialized();
   runApp(const MyApp());
 }
 
@@ -21,6 +26,24 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'WG IT',
       theme: ThemeData(
+        iconTheme: IconThemeData(
+          color: Colors.grey[350]
+        ),
+          switchTheme: SwitchThemeData(
+            thumbColor: MaterialStateProperty.resolveWith((states) =>
+            states.contains(MaterialState.selected)
+                ? Colors.deepOrangeAccent
+                : null),
+            trackColor: MaterialStateProperty.resolveWith((states) =>
+            states.contains(MaterialState.selected)
+                ? Colors.deepOrange[500]
+                : null),
+          ),
+          snackBarTheme: SnackBarThemeData(
+            backgroundColor: Colors.grey.shade900,
+            contentTextStyle: TextStyle(color: Colors.grey[200]),
+            actionTextColor: Colors.deepOrangeAccent,
+          ),
         primarySwatch: Colors.deepOrange,
         brightness: Brightness.dark
       ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:wgit/drawer/sign_in_widget.dart';
 
 class MainPageDrawer extends StatelessWidget {
   MainPageDrawer({Key? key}) : super(key: key);
@@ -40,12 +41,13 @@ class MainPageDrawer extends StatelessWidget {
           primary: true,
           padding: EdgeInsets.zero,
           children: [
-            SizedBox(
+            Container(
+              color: Colors.grey[850],
               height: 80,
               child: Align(
-                alignment: Alignment.bottomCenter,
+                alignment: Alignment.centerLeft,
                 child: Container(
-                  margin: const EdgeInsets.all(15),
+                  margin: const EdgeInsets.only(top: 25, left: 25),
                   child: const Text(
                     "WG IT",
                     style: TextStyle(
@@ -56,6 +58,7 @@ class MainPageDrawer extends StatelessWidget {
                 ),
               ),
             ),
+            const SignInWidget(),
             const Divider(),
 
           ],

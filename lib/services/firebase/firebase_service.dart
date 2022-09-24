@@ -22,7 +22,7 @@ class FirebaseService {
 
         var snapshot = await RefService.currentUserRef!.get();
 
-        if (snapshot.exists) {
+        if (!snapshot.exists) {
           /// Create the user in the db, if it does not exist already
           await RefService.currentUserRef!.set({
             "displayName": user.displayName,
