@@ -5,6 +5,7 @@ import 'package:wgit/services/firebase/firebase_service.dart';
 
 import 'drawer/drawer.dart';
 import 'firebase_options.dart';
+import 'theme.dart';
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
@@ -60,16 +61,28 @@ class MainPage extends StatefulWidget {
   State<MainPage> createState() => _MainPageState();
 }
 
+
+
 class _MainPageState extends State<MainPage> {
+
+  void open(){
+
+  }
 
   @override
   Widget build(BuildContext context) {
+    theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: Text(""),
       ),
       body: Center(
-        child: Text("text")
+        child: IconButton(
+          icon: Icon(Icons.plumbing, size: 50,),
+          onPressed: (){
+            open();
+          },
+        )
 
       ),
       // floatingActionButton: FloatingActionButton(

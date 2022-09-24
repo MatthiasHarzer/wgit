@@ -1,9 +1,8 @@
-
 import 'package:flutter/material.dart';
 import 'package:wgit/services/app_management_service.dart';
 import 'package:wgit/services/firebase/auth_service.dart';
 
-import '../util/util.dart';
+import '../util/components.dart';
 
 class SignInWidget extends StatefulWidget {
   const SignInWidget({Key? key}) : super(key: key);
@@ -14,6 +13,7 @@ class SignInWidget extends StatefulWidget {
 
 class _SignInWidgetState extends State<SignInWidget> {
   bool working = false;
+  bool oldSignedIn = false;
 
   /// Generates the leading widget for the list tile
   Widget _getLeading() {
@@ -21,8 +21,7 @@ class _SignInWidgetState extends State<SignInWidget> {
     Widget widget;
     if (working) {
       widget = const Padding(
-            padding: EdgeInsets.all(5),
-          child: CircularProgressIndicator());
+          padding: EdgeInsets.all(5), child: CircularProgressIndicator());
     } else if (AuthService.signedIn) {
       widget = CircleAvatar(
         backgroundColor: Colors.grey[800],
@@ -31,12 +30,15 @@ class _SignInWidgetState extends State<SignInWidget> {
           padding: const EdgeInsets.all(2.0),
           child: ClipOval(
               child: Image.network(
-                AuthService.user!.photoURL!,
-              )),
+            AuthService.user!.photoURL!,
+          )),
         ),
       );
     } else {
-      widget = Icon(Icons.account_circle_outlined, size: size,);
+      widget = Icon(
+        Icons.account_circle_outlined,
+        size: size,
+      );
     }
     return SizedBox.square(
       dimension: size,
@@ -54,15 +56,23 @@ class _SignInWidgetState extends State<SignInWidget> {
     } else {
       text = "Not Signed In";
     }
-    return Text(text, softWrap: true,
-      overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize:  18),);
+    return Text(
+      text,
+      softWrap: true,
+      overflow: TextOverflow.ellipsis,
+      style: const TextStyle(fontSize: 18),
+    );
   }
 
   /// Generates the subtitle for the list tile
   Widget _getSubtitle() {
     String text;
     if (working) {
-      text = "Signing you in...";
+      if(oldSignedIn){
+        text = "Signing you out...";
+      }else{
+        text = "Signing you in...";
+      }
     } else if (AuthService.signedIn) {
       text = "Tap to sign out";
     } else {
@@ -77,12 +87,20 @@ class _SignInWidgetState extends State<SignInWidget> {
       working = true;
     });
 
-
-
     String snackBarText;
+    oldSignedIn = AuthService.signedIn;
     if (AuthService.signedIn) {
-      await AuthService.signOut();
-      snackBarText = "Successfully signed out";
+      var dialog = ConfirmDialog(
+          context: context,
+          title: "Are you sure you want to sign out?",
+          confirm: "SIGN OUT")..show();
+      bool confirm = await dialog.future;
+
+      if(confirm){
+        await AuthService.signOut();
+        snackBarText = "Successfully signed out";
+      }
+
     } else {
       bool success = await AuthService.signInWithGoogle();
       snackBarText = success
@@ -90,7 +108,7 @@ class _SignInWidgetState extends State<SignInWidget> {
           : "Failed to sign int";
     }
 
-    if(!mounted) return;
+    if (!mounted) return;
 
     // Util.showSnackBar(context, content: Text(snackBarText));
 
@@ -100,7 +118,6 @@ class _SignInWidgetState extends State<SignInWidget> {
 
     // Navigator.pop(context);
   }
-
 
   @override
   Widget build(BuildContext context) {

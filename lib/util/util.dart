@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class Util{
+class Util {
   /// Hides the current snackbar
   static void hideSnackBar(BuildContext context) {
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
