@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:wgit/services/app_management_service.dart';
 import 'package:wgit/services/firebase/auth_service.dart';
 
+import '../services/firebase/firebase_service.dart';
 import '../util/components.dart';
 
 class SignInWidget extends StatefulWidget {
@@ -30,7 +30,7 @@ class _SignInWidgetState extends State<SignInWidget> {
           padding: const EdgeInsets.all(2.0),
           child: ClipOval(
               child: Image.network(
-            AuthService.user!.photoURL!,
+                FirebaseService.user!.photoURL,
           )),
         ),
       );
@@ -52,7 +52,7 @@ class _SignInWidgetState extends State<SignInWidget> {
     if (working) {
       text = "Working on it";
     } else if (AuthService.signedIn) {
-      text = AppManager.currentUser!.displayName;
+      text = FirebaseService.user!.displayName;
     } else {
       text = "Not Signed In";
     }
@@ -103,9 +103,6 @@ class _SignInWidgetState extends State<SignInWidget> {
 
     } else {
       bool success = await AuthService.signInWithGoogle();
-      snackBarText = success
-          ? "Signed in as ${AuthService.user!.displayName}"
-          : "Failed to sign int";
     }
 
     if (!mounted) return;

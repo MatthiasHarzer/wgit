@@ -1,6 +1,5 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:wgit/services/app_management_service.dart';
 import 'package:wgit/services/firebase/firebase_service.dart';
 
 import 'drawer/drawer.dart';
@@ -14,7 +13,6 @@ void main() async{
   );
   FirebaseService.ensureInitialized();
 
-  await AppManager.ensureInitialized();
   runApp(const MyApp());
 }
 
@@ -67,6 +65,7 @@ class _MainPageState extends State<MainPage> {
 
   void open(){
 
+    FirebaseService.createHousehold("Test Haus 222222222222");
   }
 
   @override

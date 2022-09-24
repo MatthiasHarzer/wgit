@@ -5,16 +5,20 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
+import '../types.dart';
+
 /// Responsible for user management
 class AuthService {
   /// The current firebase user
-  static User? get user => FirebaseAuth.instance.currentUser;
+  static User? get _user => FirebaseAuth.instance.currentUser;
+
+  static AppUser? get appUser => signedIn ? AppUser.fromFirebaseUser(_user!) : null;
 
   /// Whether the client is signed in or not
-  static bool get signedIn => user != null;
+  static bool get signedIn => _user != null;
 
   /// The authState stream. Updates on sign-in / sign-out
-  static final Stream<User?> stateChange = FirebaseAuth.instance.authStateChanges();
+  static Stream<User?> get stateChange => FirebaseAuth.instance.authStateChanges();
 
   /// Tries to sign in the client from a Google account.
   /// Returns true if the operation was successfully
