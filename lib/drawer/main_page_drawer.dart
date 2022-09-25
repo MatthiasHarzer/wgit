@@ -1,11 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:wgit/drawer/sign_in_widget.dart';
 
+import '../theme.dart';
+import 'households_widget.dart';
+
 class MainPageDrawer extends StatelessWidget {
   MainPageDrawer({Key? key}) : super(key: key);
 
   final TextStyle itemTextStyle = TextStyle(
       color: Colors.grey[200]!, fontSize: 16, fontWeight: FontWeight.w500);
+  final TextStyle headerTextStyle = TextStyle(
+    color: Colors.grey[300],
+    fontWeight: FontWeight.w500,
+  );
+
+  /// Builds a header widget for the drawer
+  Widget _buildHeader(String title) {
+    title = title.toUpperCase();
+    return Container(
+      margin: const EdgeInsets.only(left: 10, top: 5),
+      child: Text(
+        title,
+        style: AppTheme.drawerText,
+      ),
+    );
+  }
 
   Widget _buildItem(
       {required IconData icon, required String text, VoidCallback? onTap}) {
@@ -60,7 +79,9 @@ class MainPageDrawer extends StatelessWidget {
             ),
             const SignInWidget(),
             const Divider(),
-
+            HouseholdsWidget(
+              header: _buildHeader("Households"),
+            ),
           ],
         ),
       ),

@@ -73,3 +73,86 @@ class ConfirmDialog {
     showDialog(context: context, builder: (ctx) => widget);
   }
 }
+
+class UserTextInputDialog {
+  final BuildContext context;
+  final String title;
+  final String placeHolder;
+  final String submit;
+  final String cancel;
+  final Function(String)? onSubmit;
+  final VoidCallback? onCancel;
+
+  ThemeData get _theme => Theme.of(context);
+  final double _buttonSize = 18;
+  final Completer<String?> _completer = Completer();
+  String _inputText = "";
+
+  Future<String?> get future => _completer.future;
+
+  UserTextInputDialog(
+      {required this.context,
+        required this.title,
+        required this.placeHolder,
+        this.cancel = "CANCEL",
+        this.submit = "SUBMIT",
+        this.onCancel,
+        this.onSubmit,
+        Key? key});
+
+  void _onSubmit() {
+    if (onSubmit != null) onSubmit!(_inputText);
+    _completer.complete(_inputText);
+    Navigator.pop(context);
+  }
+
+  void _onCancel() {
+    if (onCancel != null) onCancel!();
+    _completer.complete(null);
+    Navigator.pop(context);
+  }
+
+  Widget get widget => AlertDialog(
+    title: Text(
+      title,
+      textAlign: TextAlign.left,
+      style: TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 22,
+          color: Colors.grey[300]),
+    ),
+    content: TextFormField(
+      onChanged: (text)=>_inputText=text,
+
+      decoration: InputDecoration(
+        border: const UnderlineInputBorder(),
+        labelText: placeHolder,
+      ),
+    ),
+    actions: [
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          MaterialButton(
+              onPressed: _onCancel,
+              child: Text(cancel,
+                  style: TextStyle(
+                      color: _theme.colorScheme.primary,
+                      fontSize: _buttonSize))),
+          MaterialButton(
+              onPressed: _onSubmit,
+              child: Text(
+                submit,
+                style: TextStyle(
+                    color: _theme.colorScheme.primary,
+                    fontSize: _buttonSize),
+              )),
+        ],
+      ),
+    ],
+  );
+
+  void show() {
+    showDialog(context: context, builder: (ctx) => widget);
+  }
+}
