@@ -1,6 +1,19 @@
+// ignore_for_file: constant_identifier_names
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:wgit/services/firebase/auth_service.dart';
 import 'package:wgit/services/firebase/firebase_ref_service.dart';
+
+class Role {
+  static const MEMBER = "member";
+  static const ADMIN = "admin";
+
+  static String get(String role) {
+    if (role == ADMIN) return ADMIN;
+    return MEMBER;
+  }
+}
 
 class AppUser {
   late final String uid;
@@ -26,17 +39,41 @@ class AppUser {
       : this.fromJson(doc.data() as Map<String, dynamic>);
 }
 
+class HouseHoldMember {
+  late final AppUser user;
+  late final String role;
+
+  bool get isAdmin => role == Role.ADMIN;
+
+  HouseHoldMember({required this.user, required this.role});
+}
+
 class HouseHold {
   late String id;
   late String name;
-  late List<AppUser> members;
-  late List<AppUser> admins;
+  late List<HouseHoldMember> members;
+  late List<HouseHoldMember> admins;
+
+  HouseHoldMember get thisUser =>
+      members.firstWhere((m) => m.user.uid == AuthService.appUser!.uid);
 
   HouseHold._(
       {required this.id,
       required this.name,
-      required this.members,
-      required this.admins});
+      required List<AppUser> members,
+      required List<AppUser> admins}) {
+    this.members = members.map((m) {
+      return HouseHoldMember(user: m, role: roleOf(m, admins));
+    }).toList();
+    this.admins = this.members.where((m) => m.role == Role.ADMIN).toList();
+  }
+
+  static String roleOf(AppUser member, Iterable<AppUser> admins) {
+    if (admins.map((m) => m.uid).contains(member.uid)) {
+      return Role.ADMIN;
+    }
+    return Role.MEMBER;
+  }
 
   static Future<HouseHold> fromDoc(DocumentSnapshot doc) async {
     var id = doc.id;
@@ -52,7 +89,7 @@ class HouseHold {
   }
 
   @override
-  String toString(){
+  String toString() {
     return "Household<$name @ $id>";
   }
 // late AppUser owner;

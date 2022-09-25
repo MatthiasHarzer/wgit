@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 
 class Util {
@@ -36,5 +38,9 @@ class Util {
         );
       },
     );
+  }
+
+  static double degToRad(double degree){
+    return degree * (pi / 180);
   }
 }

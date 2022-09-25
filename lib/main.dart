@@ -4,7 +4,7 @@ import 'package:wgit/services/config_service.dart';
 import 'package:wgit/services/firebase/auth_service.dart';
 import 'package:wgit/services/firebase/firebase_service.dart';
 import 'package:wgit/services/types.dart';
-import 'package:wgit/views/household_view.dart';
+import 'package:wgit/views/household/household_view.dart';
 
 import 'drawer/main_page_drawer.dart';
 import 'firebase_options.dart';
@@ -64,10 +64,7 @@ class _MainPageState extends State<MainPage> {
   HouseHold? _currentHousehold;
   final GlobalKey<ScaffoldState> _key = GlobalKey();
 
-  TextStyle get buttonStyle => TextStyle(
-        color: theme.colorScheme.primary,
-        fontSize: 18,
-      );
+
   @override
   void initState() {
     super.initState();
@@ -134,7 +131,7 @@ class _MainPageState extends State<MainPage> {
             onPressed: _signInTaped,
             child: Text(
               "SIGN IN",
-              style: buttonStyle,
+              style: AppTheme.materialButtonLabelStyle,
             ),
           )
         ],
