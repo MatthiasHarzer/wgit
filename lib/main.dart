@@ -27,27 +27,44 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
+    var theme = ThemeData(
+      iconTheme: IconThemeData(color: Colors.grey[350]),
+      switchTheme: SwitchThemeData(
+        thumbColor: MaterialStateProperty.resolveWith((states) =>
+        states.contains(MaterialState.selected)
+            ? Colors.deepOrangeAccent
+            : null),
+        trackColor: MaterialStateProperty.resolveWith((states) =>
+        states.contains(MaterialState.selected)
+            ? Colors.deepOrange[500]
+            : null),
+      ),
+      appBarTheme: AppBarTheme(
+        backgroundColor: Colors.deepOrange[700],
+      ),
+      buttonTheme: ButtonThemeData(
+          textTheme: ButtonTextTheme.accent,
+          colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.deepOrange)
+      ),
+
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: Colors.grey.shade900,
+        contentTextStyle: TextStyle(color: Colors.grey[200]),
+        actionTextColor: Colors.deepOrangeAccent,
+      ),
+      primarySwatch: Colors.deepOrange,
+      brightness: Brightness.dark,);
+
+    theme = theme.copyWith(
+      textTheme: theme.textTheme.apply(
+          bodyColor: Colors.grey[300],
+        // displayColor: Colors.black
+      ),
+    );
+
     return MaterialApp(
       title: 'WG IT',
-      theme: ThemeData(
-          iconTheme: IconThemeData(color: Colors.grey[350]),
-          switchTheme: SwitchThemeData(
-            thumbColor: MaterialStateProperty.resolveWith((states) =>
-                states.contains(MaterialState.selected)
-                    ? Colors.deepOrangeAccent
-                    : null),
-            trackColor: MaterialStateProperty.resolveWith((states) =>
-                states.contains(MaterialState.selected)
-                    ? Colors.deepOrange[500]
-                    : null),
-          ),
-          snackBarTheme: SnackBarThemeData(
-            backgroundColor: Colors.grey.shade900,
-            contentTextStyle: TextStyle(color: Colors.grey[200]),
-            actionTextColor: Colors.deepOrangeAccent,
-          ),
-          primarySwatch: Colors.deepOrange,
-          brightness: Brightness.dark),
+      theme: theme,
       home: const MainPage(),
     );
   }
@@ -64,12 +81,15 @@ class _MainPageState extends State<MainPage> {
   HouseHold? _currentHousehold;
   final GlobalKey<ScaffoldState> _key = GlobalKey();
 
-
   @override
   void initState() {
     super.initState();
 
-    AuthService.stateChange.listen((u) => setState(() {}));
+    AuthService.stateChange.listen((u) => setState(() {
+      if(u == null){
+        _currentHousehold = null;
+      }
+    }));
 
     FirebaseService.availableHouseholds.listen((households) {
       if (_currentHousehold == null && households.isNotEmpty) {

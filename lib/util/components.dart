@@ -156,3 +156,20 @@ class UserTextInputDialog {
     showDialog(context: context, builder: (ctx) => widget);
   }
 }
+
+Widget buildCircularAvatar({required String url, required double dimension}){
+  return SizedBox.square(
+    dimension: dimension,
+    child: CircleAvatar(
+      backgroundColor: Colors.grey[800],
+      radius: 45,
+      child: Padding(
+        padding: const EdgeInsets.all(2.0),
+        child: ClipOval(
+            child: Image.network(
+              url,
+            )),
+      ),
+    ),
+  );
+}

@@ -43,6 +43,8 @@ class HouseHoldMember {
   late final AppUser user;
   late final String role;
 
+  String get uid => user.uid;
+
   bool get isAdmin => role == Role.ADMIN;
 
   HouseHoldMember({required this.user, required this.role});
@@ -54,8 +56,9 @@ class HouseHold {
   late List<HouseHoldMember> members;
   late List<HouseHoldMember> admins;
 
-  HouseHoldMember get thisUser =>
-      members.firstWhere((m) => m.user.uid == AuthService.appUser!.uid);
+  late HouseHoldMember thisUser;
+
+  Iterable<String> get memberIds => members.map((m)=>m.user.uid);
 
   HouseHold._(
       {required this.id,
@@ -66,6 +69,7 @@ class HouseHold {
       return HouseHoldMember(user: m, role: roleOf(m, admins));
     }).toList();
     this.admins = this.members.where((m) => m.role == Role.ADMIN).toList();
+    thisUser = this.members.firstWhere((m) => m.user.uid == AuthService.appUser!.uid);
   }
 
   static String roleOf(AppUser member, Iterable<AppUser> admins) {

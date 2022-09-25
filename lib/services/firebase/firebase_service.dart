@@ -46,6 +46,30 @@ class FirebaseService {
     return controller.stream;
   }
 
+  /// Promotes the given [member] int the given [houseHold]
+  static Future promoteMember(HouseHold houseHold, HouseHoldMember member) async{
+    if(!houseHold.memberIds.contains(member.uid)) return;
+
+    var admins = [...houseHold.admins];
+    admins.add(member);
+
+    await RefService.refOf(houseHoldId: houseHold.id).update({
+      "admins": admins.map((a)=>a.user.uid).toList()
+    });
+  }
+
+  /// Removes the given [member] from the given [houseHold]
+  static Future removeMember(HouseHold houseHold, HouseHoldMember member) async{
+    if(!houseHold.memberIds.contains(member.uid)) return;
+
+    var members = [...houseHold.members];
+    members.remove(member);
+
+    await RefService.refOf(houseHoldId: houseHold.id).update({
+      "members": members.map((a)=>a.user.uid).toList()
+    });
+  }
+
   /// Adds a household with the current user as an admin
   static Future<HouseHold?> createHousehold(String name) async {
     if (!signedIn) return null;

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:wgit/services/types.dart';
 
 import '../../theme.dart';
+import '../../util/components.dart';
 import '../../util/util.dart';
 
 class HouseHoldMembersSnippet extends StatelessWidget {
@@ -30,20 +31,7 @@ class HouseHoldMembersSnippet extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          SizedBox.square(
-            dimension: 55,
-            child: CircleAvatar(
-              backgroundColor: Colors.grey[800],
-              radius: 45,
-              child: Padding(
-                padding: const EdgeInsets.all(2.0),
-                child: ClipOval(
-                    child: Image.network(
-                  member.user.photoURL,
-                )),
-              ),
-            ),
-          ),
+          buildCircularAvatar(url: member.user.photoURL, dimension: 55),
           Column(
             children: [Text(member.user.displayName)],
           )
