@@ -33,14 +33,17 @@ class FirebaseService {
               [for (var doc in event.docs) HouseHold.fromDoc(doc)]));
 
   /// Adds a household with the current user as an admin
-  static Future<void> createHousehold(String name) async {
-    if (!signedIn) return;
+  static Future<HouseHold?> createHousehold(String name) async {
+    if (!signedIn) return null;
 
-    await RefService.householdsRef.add({
+    var docRef = await RefService.householdsRef.add({
       "name": name,
       "members": [user!.uid],
       "admins": [user!.uid],
     });
+    var doc = await docRef.get(); // Just to make sure the household was really created
+
+    return HouseHold.fromDoc(doc);
   }
 
   /// Initializes firebase, if not done already

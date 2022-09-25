@@ -1,24 +1,39 @@
 import 'package:flutter/material.dart';
+import 'package:wgit/services/firebase/firebase_service.dart';
+import 'package:wgit/services/types.dart';
 
 import '../../util/components.dart';
 
-class AddOrCreateHouseholdView extends StatefulWidget {
-  const AddOrCreateHouseholdView({Key? key}) : super(key: key);
+
+class JoinOrCreateHouseholdView extends StatefulWidget {
+  final Function(HouseHold) onFinished;
+
+  const JoinOrCreateHouseholdView({required this.onFinished, Key? key}) : super(key: key);
 
   @override
-  State<AddOrCreateHouseholdView> createState() =>
-      _AddOrCreateHouseholdViewState();
+  State<JoinOrCreateHouseholdView> createState() =>
+      _JoinOrCreateHouseholdViewState();
 }
 
-class _AddOrCreateHouseholdViewState extends State<AddOrCreateHouseholdView> {
+class _JoinOrCreateHouseholdViewState extends State<JoinOrCreateHouseholdView> {
   ThemeData get theme => Theme.of(context);
   TextStyle get buttonStyle => TextStyle(
       color: theme.colorScheme.primary,
     fontSize: 18,
   );
 
-  void _onCreateConfirm(String name){
+  void _onCreateConfirm(String name)async{
+    if(name.isEmpty) return;
     print("CRETING WITH $name");
+    HouseHold? household = await FirebaseService.createHousehold(name);
+    if(household != null){
+      if(mounted){
+        Navigator.pop(context);
+      }
+      widget.onFinished(household);
+    }else{
+      print("An error occurred creating household $name");
+    }
   }
 
 

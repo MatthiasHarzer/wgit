@@ -1,18 +1,39 @@
 import 'package:flutter/material.dart';
 import 'package:wgit/drawer/sign_in_widget.dart';
+import 'package:wgit/services/firebase/auth_service.dart';
+import '../services/types.dart';
 
 import '../theme.dart';
 import 'households_widget.dart';
 
-class MainPageDrawer extends StatelessWidget {
-  MainPageDrawer({Key? key}) : super(key: key);
+class MainPageDrawer extends StatefulWidget {
+  final Function(HouseHold) onSwitchTo;
 
-  final TextStyle itemTextStyle = TextStyle(
-      color: Colors.grey[200]!, fontSize: 16, fontWeight: FontWeight.w500);
+  const MainPageDrawer({required this.onSwitchTo, Key? key}) : super(key: key);
+
+  @override
+  State<MainPageDrawer> createState() => _MainPageDrawerState();
+}
+
+class _MainPageDrawerState extends State<MainPageDrawer> {
   final TextStyle headerTextStyle = TextStyle(
     color: Colors.grey[300],
     fontWeight: FontWeight.w500,
   );
+
+  @override
+  void initState() {
+    super.initState();
+
+    AuthService.stateChange.listen((event) {
+      setState(() {});
+    });
+  }
+
+  void _switchToHousehold(HouseHold houseHold) {
+    Navigator.pop(context);
+    widget.onSwitchTo(houseHold);
+  }
 
   /// Builds a header widget for the drawer
   Widget _buildHeader(String title) {
@@ -22,31 +43,6 @@ class MainPageDrawer extends StatelessWidget {
       child: Text(
         title,
         style: AppTheme.drawerText,
-      ),
-    );
-  }
-
-  Widget _buildItem(
-      {required IconData icon, required String text, VoidCallback? onTap}) {
-    return ListTile(
-      onTap: onTap,
-      title: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        // mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Icon(
-            icon,
-            color: itemTextStyle.color,
-            size: (itemTextStyle.fontSize! * 1.5),
-          ),
-          Container(
-            margin: const EdgeInsets.only(left: 30),
-            child: Text(
-              text,
-              style: itemTextStyle,
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -79,8 +75,12 @@ class MainPageDrawer extends StatelessWidget {
             ),
             const SignInWidget(),
             const Divider(),
-            HouseholdsWidget(
-              header: _buildHeader("Households"),
+            Visibility(
+              visible: AuthService.signedIn,
+              child: HouseholdsWidget(
+                header: _buildHeader("Households"),
+                onSwitchTo: _switchToHousehold,
+              ),
             ),
           ],
         ),

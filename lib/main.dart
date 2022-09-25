@@ -1,6 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:wgit/services/firebase/firebase_service.dart';
+import 'package:wgit/services/types.dart';
 
 import 'drawer/main_page_drawer.dart';
 import 'firebase_options.dart';
@@ -68,6 +69,10 @@ class _MainPageState extends State<MainPage> {
     FirebaseService.createHousehold("Test Haus 222222222222");
   }
 
+  void _switchToHousehold(HouseHold household){
+    print("Switching to $household");
+  }
+
   @override
   Widget build(BuildContext context) {
     theme = Theme.of(context);
@@ -89,7 +94,9 @@ class _MainPageState extends State<MainPage> {
       //   tooltip: 'Increment',
       //   child: const Icon(Icons.add),
       // ), // This trailing comma makes auto-formatting nicer for build methods.
-      drawer: MainPageDrawer(),
+      drawer: MainPageDrawer(
+        onSwitchTo: _switchToHousehold,
+      ),
     );
   }
 }

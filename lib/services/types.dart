@@ -50,5 +50,10 @@ class HouseHold {
     return HouseHold._(
         id: id, name: name, members: members.toList(), admins: admins.toList());
   }
+
+  @override
+  String toString(){
+    return "Household<$name @ $id>";
+  }
 // late AppUser owner;
 }
