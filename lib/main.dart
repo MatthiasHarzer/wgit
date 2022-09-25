@@ -1,5 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:wgit/services/config_service.dart';
 import 'package:wgit/services/firebase/firebase_service.dart';
 import 'package:wgit/services/types.dart';
 
@@ -12,6 +13,7 @@ void main() async{
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  await ConfigService.ensureInitialized();
   FirebaseService.ensureInitialized();
 
   runApp(const MyApp());
@@ -63,14 +65,34 @@ class MainPage extends StatefulWidget {
 
 
 class _MainPageState extends State<MainPage> {
+  HouseHold? _currentHousehold;
+
+  @override
+  void initState(){
+    super.initState();
+
+    FirebaseService.availableHouseholds.listen((households) {
+        if(_currentHousehold == null){
+          var resolved = households.where((household) => household.id == ConfigService.currentHouseholdId);
+          if(resolved.length == 1){
+            _switchToHousehold(resolved.first);
+            // _currentHousehold = resolved.first;
+          }
+        }
+    });
+  }
 
   void open(){
 
-    FirebaseService.createHousehold("Test Haus 222222222222");
+    // FirebaseService.createHousehold("Test Haus 222222222222");
   }
 
   void _switchToHousehold(HouseHold household){
     print("Switching to $household");
+    ConfigService.currentHouseholdId = household.id;
+    setState((){
+      _currentHousehold = household;
+    });
   }
 
   @override
@@ -78,6 +100,7 @@ class _MainPageState extends State<MainPage> {
     theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: theme.colorScheme.primaryContainer,
         title: Text(""),
       ),
       body: Center(

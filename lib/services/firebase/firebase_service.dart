@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../types.dart';
@@ -24,13 +26,25 @@ class FirebaseService {
         [for (var doc in snapshot.docs) HouseHold.fromDoc(doc)]);
   }
 
-  static Stream<List<HouseHold>> get availableHouseholds => !signedIn
-      ? const Stream.empty()
-      : RefService.householdsRef
-          .where("members", arrayContains: user!.uid)
-          .snapshots()
-          .asyncMap((event) => Future.wait(
-              [for (var doc in event.docs) HouseHold.fromDoc(doc)]));
+  static Stream<List<HouseHold>>  get availableHouseholds{
+    StreamController<List<HouseHold>> controller = StreamController();
+
+    AuthService.stateChange.listen((user) {
+      if(user == null){
+        controller.add([]);
+      }else{
+        RefService.householdsRef
+            .where("members", arrayContains: user.uid)
+            .snapshots()
+            .asyncMap((event) => Future.wait(
+            [for (var doc in event.docs) HouseHold.fromDoc(doc)]))
+            .listen((households) {
+          controller.add(households);
+        });
+      }
+    });
+    return controller.stream;
+  }
 
   /// Adds a household with the current user as an admin
   static Future<HouseHold?> createHousehold(String name) async {
@@ -41,7 +55,8 @@ class FirebaseService {
       "members": [user!.uid],
       "admins": [user!.uid],
     });
-    var doc = await docRef.get(); // Just to make sure the household was really created
+    var doc = await docRef
+        .get(); // Just to make sure the household was really created
 
     return HouseHold.fromDoc(doc);
   }
@@ -50,9 +65,11 @@ class FirebaseService {
   static void ensureInitialized() {
     if (_initialized) return;
 
-    AuthService.stateChange.listen((event) {
-      print("USER IS ${event?.displayName}", );
-      if(event != null){
+    AuthService.stateChange.listen((user) {
+      print(
+        "USER IS signed in;: ${user?.displayName}",
+      );
+      if (user != null) {
         print("STARING STREAM LISTENING");
         availableHouseholds.listen((hoseholds) {
           print("----");
@@ -64,7 +81,6 @@ class FirebaseService {
         });
       }
     });
-
 
     AuthService.stateChange.listen((User? user) async {
       if (user != null) {
@@ -82,6 +98,7 @@ class FirebaseService {
             "uid": user.uid,
           });
         }
+
       }
     });
 

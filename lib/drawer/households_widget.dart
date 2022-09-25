@@ -59,16 +59,18 @@ class _HouseholdsWidgetState extends State<HouseholdsWidget> {
   Widget _buildHouseholds() {
     return StreamBuilder(
       stream: FirebaseService.availableHouseholds,
-      builder: (context, snapshot) => Column(
-        children: [
-          for (var household in snapshot.data ?? [])
-            _buildItem(
-              icon: Icons.home_outlined,
-              text: household.name,
-              onTap: () => _switchTo(household),
-            )
-        ],
-      ),
+      builder: (context, snapshot){
+        return Column(
+          children: [
+            for (var household in snapshot.data ?? [])
+              _buildItem(
+                icon: Icons.home_outlined,
+                text: household.name,
+                onTap: () => _switchTo(household),
+              )
+          ],
+        );
+      },
     );
   }
 
