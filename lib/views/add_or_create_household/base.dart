@@ -24,7 +24,6 @@ class _JoinOrCreateHouseholdViewState extends State<JoinOrCreateHouseholdView> {
 
   void _onCreateConfirm(String name)async{
     if(name.isEmpty) return;
-    print("CRETING WITH $name");
     HouseHold? household = await FirebaseService.createHousehold(name);
     if(household != null){
       if(mounted){

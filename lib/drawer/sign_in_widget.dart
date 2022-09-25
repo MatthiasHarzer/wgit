@@ -15,6 +15,13 @@ class _SignInWidgetState extends State<SignInWidget> {
   bool working = false;
   bool oldSignedIn = false;
 
+  @override
+  void initState(){
+    super.initState();
+
+    AuthService.stateChange.listen((e)=>setState((){}));
+  }
+
   /// Generates the leading widget for the list tile
   Widget _getLeading() {
     double size = 43;
