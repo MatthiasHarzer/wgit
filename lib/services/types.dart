@@ -1,4 +1,5 @@
 // ignore_for_file: constant_identifier_names
+import 'dart:ui';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -16,80 +17,131 @@ class Role {
 }
 
 class AppUser {
+  static final Map<String, AppUser> _CACHE = {};
+
   late final String uid;
   late final String displayName;
   late final String photoURL;
 
-  AppUser(
+  AppUser._(
       {required this.uid, required this.displayName, required this.photoURL});
 
-  AppUser.fromFirebaseUser(User user) {
-    uid = user.uid;
-    displayName = user.displayName!;
-    photoURL = user.photoURL!;
+  static AppUser _getCachedOrCreate(
+      {required String uid,
+      required String displayName,
+      required String photoURL}) {
+    if (_CACHE.containsKey(uid)) return _CACHE[uid]!;
+
+    var user =
+        AppUser._(uid: uid, displayName: displayName, photoURL: photoURL);
+    _CACHE[uid] = user;
+    return user;
   }
 
-  AppUser.fromJson(Map<String, dynamic> data) {
-    uid = data["uid"];
-    displayName = data["displayName"];
-    photoURL = data["photoURL"];
+  static AppUser fromFirebaseUser(User user) {
+    var uid = user.uid;
+    var displayName = user.displayName!;
+    var photoURL = user.photoURL!;
+    return _getCachedOrCreate(
+        uid: uid, displayName: displayName, photoURL: photoURL);
   }
 
-  AppUser.fromDoc(DocumentSnapshot doc)
-      : this.fromJson(doc.data() as Map<String, dynamic>);
-}
+  static AppUser fromJson(Map<String, dynamic> data) {
+    var uid = data["uid"];
+    var displayName = data["displayName"];
+    var photoURL = data["photoURL"];
+    return _getCachedOrCreate(
+        uid: uid, displayName: displayName, photoURL: photoURL);
+  }
 
-class HouseHoldMember {
-  late final AppUser user;
-  late final String role;
+  static AppUser fromDoc(DocumentSnapshot doc) {
+    return fromJson(doc.data() as Map<String, dynamic>);
+  }
 
-  String get uid => user.uid;
-
-  bool get isAdmin => role == Role.ADMIN;
-
-  HouseHoldMember({required this.user, required this.role});
+  static AppUser? tryGetCached(String uid) {
+    if (_CACHE.containsKey(uid)) return _CACHE[uid];
+    return null;
+  }
 }
 
 class HouseHold {
+  static final Map<String, HouseHold> _CACHE = {};
+
   late String id;
   late String name;
-  late List<HouseHoldMember> members;
-  late List<HouseHoldMember> admins;
+  late List<AppUser> members;
+  late List<AppUser> admins;
 
-  late HouseHoldMember thisUser;
+  // Iterable<String> get memberIds => members.map((m) => m.user.uid);
+  AppUser get thisUser => AuthService.appUser!;
 
-  Iterable<String> get memberIds => members.map((m)=>m.user.uid);
+  final List<VoidCallback> _onChange = [];
+
+  void onChange(VoidCallback cb) {
+    _onChange.add(cb);
+  }
+
+  void _callOnChange() {
+    _onChange.forEach((cb) => cb());
+  }
 
   HouseHold._(
       {required this.id,
       required this.name,
-      required List<AppUser> members,
-      required List<AppUser> admins}) {
-    this.members = members.map((m) {
-      return HouseHoldMember(user: m, role: roleOf(m, admins));
-    }).toList();
-    this.admins = this.members.where((m) => m.role == Role.ADMIN).toList();
-    thisUser = this.members.firstWhere((m) => m.user.uid == AuthService.appUser!.uid);
+      required this.members,
+      required this.admins});
+
+  static HouseHold? tryGetCached(String id) {
+    if (_CACHE.containsKey(id)) return _CACHE[id];
+    return null;
   }
 
-  static String roleOf(AppUser member, Iterable<AppUser> admins) {
-    if (admins.map((m) => m.uid).contains(member.uid)) {
-      return Role.ADMIN;
-    }
-    return Role.MEMBER;
-  }
-
-  static Future<HouseHold> fromDoc(DocumentSnapshot doc) async {
+  static Future<HouseHold> getCachedAndUpdateFromDocOrCreateNew(
+      DocumentSnapshot doc) async {
     var id = doc.id;
+
+    HouseHold houseHold;
+
+    var cached = tryGetCached(id);
+    if (cached != null) {
+      houseHold = await cached._updateWith(doc);
+    }else{
+      var data = doc.data() as Map<String, dynamic>;
+
+      var name = data["name"];
+      var members = await RefService.resolveUids(data["members"].cast<String>());
+      var admins = await RefService.resolveUids(data["admins"].cast<String>());
+
+      houseHold = HouseHold._(
+          id: id, name: name, members: members.toList(), admins: admins.toList());
+      _CACHE[id] = houseHold;
+    }
+    houseHold._callOnChange();
+    return houseHold;
+  }
+
+  /// Updates this household with data from the given [doc]. Returns itself
+  Future<HouseHold> _updateWith(DocumentSnapshot doc) async {
+    id = doc.id;
 
     var data = doc.data() as Map<String, dynamic>;
 
-    var name = data["name"];
-    var members = await RefService.resolveUids(data["members"].cast<String>());
-    var admins = await RefService.resolveUids(data["admins"].cast<String>());
+    name = data["name"];
+    members =
+        (await RefService.resolveUids(data["members"].cast<String>())).toList();
+    admins =
+        (await RefService.resolveUids(data["admins"].cast<String>())).toList();
+    return this;
+  }
 
-    return HouseHold._(
-        id: id, name: name, members: members.toList(), admins: admins.toList());
+  /// Determines if the given [user] is an admin in this household
+  bool isUserAdmin(AppUser user) {
+    return admins.contains(user);
+  }
+
+  /// Returns the role name depending on [isUserAdmin]
+  String getUserRoleName(AppUser user) {
+    return isUserAdmin(user) ? "ADMIN" : "MEMBER";
   }
 
   @override

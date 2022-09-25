@@ -6,8 +6,6 @@ import 'firebase_service.dart';
 
 /// Responsible for providing references in the cloud firestore
 class RefService {
-  static Map<String, AppUser> _user_cache = {};
-
   static FirebaseFirestore get _firestore => FirebaseFirestore.instance;
 
   static DocumentReference get appRef => _firestore.doc("wg-it/public");
@@ -34,16 +32,13 @@ class RefService {
 
   /// Gets users information by its user id
   static Future<AppUser?> resolveUid(String uid) async {
-    if (_user_cache.keys.contains(uid)) {
-      return _user_cache[uid];
-    }
+    var cached = AppUser.tryGetCached(uid);
+    if(cached != null) return cached;
 
     var doc = await usersRef.doc(uid).get();
     if (!doc.exists) return null;
 
-    _user_cache[uid] = AppUser.fromDoc(doc);
-
-    return _user_cache[uid];
+    return AppUser.fromDoc(doc);
   }
 
   /// Like [resolveUid] but for arrays

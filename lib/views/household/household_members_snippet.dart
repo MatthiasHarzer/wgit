@@ -14,7 +14,7 @@ class HouseHoldMembersSnippet extends StatelessWidget {
       {required this.houseHold, required this.onManageTap, Key? key})
       : super(key: key);
 
-  List<HouseHoldMember> get members => houseHold.members;
+  List<AppUser> get members => houseHold.members;
 
   List mulitply(List m, int n) {
     List u = [];
@@ -25,15 +25,15 @@ class HouseHoldMembersSnippet extends StatelessWidget {
   }
 
   ///
-  Widget _buildUserSnippet(HouseHoldMember member) {
+  Widget _buildUserSnippet(AppUser member) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 5),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          buildCircularAvatar(url: member.user.photoURL, dimension: 55),
+          buildCircularAvatar(url: member.photoURL, dimension: 55),
           Column(
-            children: [Text(member.user.displayName)],
+            children: [Text(member.displayName)],
           )
         ],
       ),
@@ -67,7 +67,7 @@ class HouseHoldMembersSnippet extends StatelessWidget {
                   fontSize: 18,
                 ),
               ),
-              if (houseHold.thisUser.isAdmin)
+              if (houseHold.isUserAdmin(houseHold.thisUser))
                 MaterialButton(
                   onPressed: onManageTap,
                   child: Text(

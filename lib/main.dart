@@ -160,6 +160,13 @@ class _MainPageState extends State<MainPage> {
     return Text("");
   }
 
+  Widget _buildCurrentHouseHoldViewOrSpinner(){
+    if(_currentHousehold == null){
+      return const CircularProgressIndicator();
+    }
+    return HouseHoldView(houseHold: _currentHousehold!);
+  }
+
   @override
   Widget build(BuildContext context) {
     theme = Theme.of(context);
@@ -171,7 +178,7 @@ class _MainPageState extends State<MainPage> {
       ),
       body: Center(
         child: AuthService.signedIn
-            ? HouseHoldView(houseHold: _currentHousehold)
+            ? _buildCurrentHouseHoldViewOrSpinner()
             : _buildNoHouseholdView(),
       ),
       // floatingActionButton: FloatingActionButton(

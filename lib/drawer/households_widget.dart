@@ -57,6 +57,10 @@ class _HouseholdsWidgetState extends State<HouseholdsWidget> {
 
   /// Build all available households from the [FirebaseService.availableHouseholds] stream
   Widget _buildHouseholds() {
+    FirebaseService.availableHouseholds.listen((event) {
+      // print("STREAM BUILDER:");
+      // print(event.length);
+    });
     return StreamBuilder(
       stream: FirebaseService.availableHouseholds,
       builder: (context, snapshot){

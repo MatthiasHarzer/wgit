@@ -1,13 +1,13 @@
 import 'package:expandable/expandable.dart';
 import 'package:flutter/material.dart';
-import 'package:wgit/views/household/members_view.dart';
+import 'package:wgit/views/household/manage_members_view.dart';
 
 import '../../services/types.dart';
 import '../../util/util.dart';
 import 'household_members_snippet.dart';
 
 class HouseHoldView extends StatefulWidget {
-  final HouseHold? houseHold;
+  final HouseHold houseHold;
 
   const HouseHoldView({required this.houseHold, Key? key}) : super(key: key);
 
@@ -16,7 +16,18 @@ class HouseHoldView extends StatefulWidget {
 }
 
 class _HouseHoldViewState extends State<HouseHoldView> {
-  HouseHold get houseHold => widget.houseHold!;
+  HouseHold get houseHold => widget.houseHold;
+
+  @override
+  void initState() {
+    super.initState();
+
+    houseHold.onChange(() => {
+      if(mounted){
+        setState(() {})
+      }
+    });
+  }
 
   /// An empty widget
   Widget _empty() {
@@ -28,7 +39,7 @@ class _HouseHoldViewState extends State<HouseHoldView> {
     Navigator.push(
       context,
       Util.createScaffoldRoute(
-        view: MembersView(
+        view: ManageMembersView(
           houseHold: houseHold,
         ),
       ),

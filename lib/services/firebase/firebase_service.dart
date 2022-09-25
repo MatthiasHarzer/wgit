@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../types.dart';
@@ -23,7 +24,7 @@ class FirebaseService {
         .get();
 
     return await Future.wait(
-        [for (var doc in snapshot.docs) HouseHold.fromDoc(doc)]);
+        [for (var doc in snapshot.docs) HouseHold.getCachedAndUpdateFromDocOrCreateNew(doc)]);
   }
 
   static Stream<List<HouseHold>>  get availableHouseholds{
@@ -37,7 +38,7 @@ class FirebaseService {
             .where("members", arrayContains: user.uid)
             .snapshots()
             .asyncMap((event) => Future.wait(
-            [for (var doc in event.docs) HouseHold.fromDoc(doc)]))
+            [for (var doc in event.docs) HouseHold.getCachedAndUpdateFromDocOrCreateNew(doc)]))
             .listen((households) {
           controller.add(households);
         });
@@ -47,26 +48,26 @@ class FirebaseService {
   }
 
   /// Promotes the given [member] int the given [houseHold]
-  static Future promoteMember(HouseHold houseHold, HouseHoldMember member) async{
-    if(!houseHold.memberIds.contains(member.uid)) return;
+  static Future promoteMember(HouseHold houseHold, AppUser member) async{
+    if(!houseHold.members.contains(member)) return;
 
     var admins = [...houseHold.admins];
     admins.add(member);
 
     await RefService.refOf(houseHoldId: houseHold.id).update({
-      "admins": admins.map((a)=>a.user.uid).toList()
+      "admins": admins.map((a)=>a.uid).toList()
     });
   }
 
   /// Removes the given [member] from the given [houseHold]
-  static Future removeMember(HouseHold houseHold, HouseHoldMember member) async{
-    if(!houseHold.memberIds.contains(member.uid)) return;
+  static Future removeMember(HouseHold houseHold, AppUser member) async{
+    if(!houseHold.members.contains(member)) return;
 
     var members = [...houseHold.members];
     members.remove(member);
 
     await RefService.refOf(houseHoldId: houseHold.id).update({
-      "members": members.map((a)=>a.user.uid).toList()
+      "members": members.map((a)=>a.uid).toList()
     });
   }
 
@@ -82,7 +83,7 @@ class FirebaseService {
     var doc = await docRef
         .get(); // Just to make sure the household was really created
 
-    return HouseHold.fromDoc(doc);
+    return HouseHold.getCachedAndUpdateFromDocOrCreateNew(doc);
   }
 
   /// Initializes firebase, if not done already
