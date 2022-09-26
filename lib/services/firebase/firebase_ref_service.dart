@@ -34,6 +34,10 @@ class RefService {
     return refOf(houseHoldId: houseHoldId).collection("activities");
   }
 
+  static DocumentReference refOfActivity({required String houseHoldId, required String activityId}){
+    return refOfActivities(houseHoldId: houseHoldId).doc(activityId);
+  }
+
   /// Retunrs the ref of the given users data of a household
   static DocumentReference memberDataRefOf(
       {required String houseHoldId, required String uid}) {

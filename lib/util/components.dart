@@ -43,7 +43,7 @@ class ConfirmDialog {
           textAlign: TextAlign.left,
           style: TextStyle(
               fontWeight: FontWeight.bold,
-              fontSize: 22,
+              fontSize: 20,
               color: Colors.grey[300]),
         ),
         actions: [

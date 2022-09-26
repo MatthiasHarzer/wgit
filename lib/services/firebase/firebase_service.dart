@@ -97,15 +97,12 @@ class FirebaseService {
     await ref.set(memberData.toJson());
   }
 
-  static Future addActivity(
-      {required HouseHold houseHold, required Activity activity}) async {
+  static Future _addActivity({required HouseHold houseHold, required Activity activity})async{
     var ref = RefService.refOfActivities(houseHoldId: houseHold.id);
-    print("adding ${activity.toJson()}");
     var map = activity.toJson();
     map["timestamp"] = FieldValue.serverTimestamp();
     await ref.add(map);
 
-    print("Added $activity");
 
     Future updateMB(AppUser member, double contribution) async {
       var memberData = await houseHold.memberDataOf(member: member);
@@ -120,9 +117,52 @@ class FirebaseService {
       futures.add(updateMB(member, contribution));
     }
 
-    print("Updating meberdata.....");
+    await Future.wait(futures);
+  }
+
+
+  static Future _editActivity({required HouseHold houseHold, required Activity activity})async{
+    var ref = RefService.refOfActivity(houseHoldId: houseHold.id, activityId: activity.id!);
+
+    var existingDoc = await ref.get();
+    var existingActivity = await Activity.fromDoc(existingDoc);
+
+    var map = activity.toJson();
+    await ref.update(map);
+
+
+    Future updateMB(AppUser member, double contribution) async {
+      var memberData = await houseHold.memberDataOf(member: member);
+      memberData.totalPaid += contribution;
+      await updateMemberData(houseHold: houseHold, memberData: memberData);
+    }
+
+    List<Future> futures = [];
+    for (var entry in activity.contributions.entries) {
+      var member = entry.key;
+      var existingContribution = existingActivity.getContributionOf(member);
+      var contribution = entry.value;
+      futures.add(updateMB(member, contribution - existingContribution)); // Only take delta in account
+    }
 
     await Future.wait(futures);
+  }
+
+  /// Creates a new activity, or if the activity has an id, edits the existing one
+  static Future submitActivity(
+      {required HouseHold houseHold, required Activity activity}) async {
+
+    print("ID IS ${activity.id}");
+
+    if(activity.id == null){
+      /// It is a new activity
+      await _addActivity(houseHold: houseHold, activity: activity);
+    }else{
+      /// Activity is edited
+      await _editActivity(houseHold: houseHold, activity: activity);
+    }
+
+
   }
 
   /// Initializes firebase, if not done already

@@ -44,5 +44,15 @@ class Util {
     return degree * (pi / 180);
   }
 
+  static runDelayed(VoidCallback cb, Duration delay) async{
+    await Future.delayed(delay);
+    cb();
+  }
+
+  static String formatAmount(double m){
+    int l = m.toInt().toString().length + 3;
+    return m.toString().padRight(l, "0");
+  }
+
 
 }

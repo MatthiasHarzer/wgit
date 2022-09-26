@@ -3,27 +3,40 @@ import 'package:wgit/services/firebase/firebase_service.dart';
 
 import '../services/types.dart';
 import '../util/components.dart';
+import '../util/util.dart';
 
-class NewActivity extends StatefulWidget {
+class EditOrNewActivity extends StatefulWidget {
   final HouseHold houseHold;
+  final Activity? existingActivity;
 
-  const NewActivity({required this.houseHold, Key? key}) : super(key: key);
+  const EditOrNewActivity({required this.houseHold, this.existingActivity, Key? key}) : super(key: key);
 
   @override
-  State<NewActivity> createState() => _NewActivityState();
+  State<EditOrNewActivity> createState() => _EditOrNewActivityState();
 }
 
-class _NewActivityState extends State<NewActivity> {
+class _EditOrNewActivityState extends State<EditOrNewActivity> {
   HouseHold get houseHold => widget.houseHold;
-
   List<AppUser> get availableUsers => widget.houseHold.members;
 
   double get total => _contributions.values.fold(0, (p, c) => p + c);
 
+  late Activity tempActivity = Activity.empty();
+  bool isEditMode = false;
+
   bool working = false;
 
-  String _activityLabel = "";
-  Map<AppUser, double> _contributions = {};
+  Map<AppUser, double> get _contributions => tempActivity.contributions;
+
+  @override
+  void initState(){
+    super.initState();
+
+    if(widget.existingActivity != null){
+      isEditMode = true;
+      tempActivity = widget.existingActivity!.copy();
+    }
+  }
 
   void _close(){
     FocusManager.instance.primaryFocus?.unfocus();
@@ -32,16 +45,12 @@ class _NewActivityState extends State<NewActivity> {
 
   void _submit()async{
     if(working) return;
-    var label = _activityLabel.isEmpty ? "(Unnamed)" : _activityLabel;
-    Activity activity = Activity.temp(
-      label: label,
-      contributions: _contributions,
-    );
+    tempActivity.label = tempActivity.label.isEmpty ? "(Unnamed)" : tempActivity.label;
     setState(() {
       working = true;
     });
 
-    await FirebaseService.addActivity(houseHold: houseHold, activity: activity);
+    await FirebaseService.submitActivity(houseHold: houseHold, activity: tempActivity);
 
     if(mounted){
       setState(() {
@@ -116,13 +125,8 @@ class _NewActivityState extends State<NewActivity> {
 
   /// Builds the total display widget
   Widget _buildTotal() {
-    int l = total.toInt().toString().length + 3;
-
-
-
-    TextStyle style = TextStyle(
-        fontSize: 20, fontWeight: FontWeight.w500, color: Colors.grey[400]);
-    String text = "Total: €${total.toString().padRight(l, "0")}";
+    TextStyle style = TextStyle(fontSize: 20, fontWeight: FontWeight.w500, color: Colors.grey[400]);
+    String text = "Total: €${Util.formatAmount(total)}";
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -182,8 +186,9 @@ class _NewActivityState extends State<NewActivity> {
           child: Column(
             children: [
               TextFormField(
-                autofocus: true,
-                onChanged: (text) => _activityLabel = text,
+                initialValue: tempActivity.label,
+                autofocus: !isEditMode,
+                onChanged: (text) => tempActivity.label = text,
                 decoration: const InputDecoration(
                   border: UnderlineInputBorder(),
                   labelText: "Label or reason",

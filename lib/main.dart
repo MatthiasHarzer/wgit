@@ -8,7 +8,7 @@ import 'package:wgit/util/components.dart';
 import 'package:wgit/util/util.dart';
 import 'package:wgit/views/add_or_create_household/base.dart';
 import 'package:wgit/views/household/household_view.dart';
-import 'package:wgit/views/new_activity.dart';
+import 'package:wgit/views/edit_or_new_activity.dart';
 
 import 'drawer/drawer.dart';
 import 'firebase_options.dart';
@@ -166,7 +166,7 @@ class _MainPageState extends State<MainPage> {
     Navigator.push(
         context,
         Util.createScaffoldRoute(
-            view: NewActivity(houseHold: _currentHousehold!)));
+            view: EditOrNewActivity(houseHold: _currentHousehold!)));
   }
 
   /// Builds the appbar title depending on [_currentHousehold]
