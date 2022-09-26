@@ -34,8 +34,9 @@ class FirebaseService {
       if(user == null){
         controller.add([]);
       }else{
+
         RefService.householdsRef
-            .where("members", arrayContains: user.uid)
+              .where("members", arrayContains: user.uid)
             .snapshots()
             .asyncMap((event) => Future.wait(
             [for (var doc in event.docs) HouseHold.getCachedAndUpdateFromDocOrCreateNew(doc)]))

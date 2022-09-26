@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:wgit/services/firebase/auth_service.dart';
 
 import '../types.dart';
 import 'firebase_service.dart';
@@ -30,10 +29,21 @@ class RefService {
     return usersRef.doc(uid);
   }
 
+  /// Returns the ref to save activities in.
+  static CollectionReference refOfActivities({required String houseHoldId}) {
+    return refOf(houseHoldId: houseHoldId).collection("activities");
+  }
+
+  /// Retunrs the ref of the given users data of a household
+  static DocumentReference memberDataRefOf(
+      {required String houseHoldId, required String uid}) {
+    return refOf(houseHoldId: houseHoldId).collection("member-data").doc(uid);
+  }
+
   /// Gets users information by its user id
   static Future<AppUser?> resolveUid(String uid) async {
     var cached = AppUser.tryGetCached(uid);
-    if(cached != null) return cached;
+    if (cached != null) return cached;
 
     var doc = await usersRef.doc(uid).get();
     if (!doc.exists) return null;
