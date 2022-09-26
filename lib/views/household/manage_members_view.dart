@@ -68,18 +68,20 @@ class _ManageMembersViewState extends State<ManageMembersView> {
     return ListTile(
       leading: buildCircularAvatar(url: member.photoURL, dimension: 40),
       title: Text(member.displayName,
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500)),
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500)),
       subtitle: Text(houseHold.getUserRoleName(member)),
       trailing: Wrap(
         children: [
-          MaterialButton(
+          TextButton(
             onPressed: isPromotable ? () => _promoteMemberTaped(member) : null,
-            disabledTextColor: Colors.grey,
+
             child: const Text("PROMOTE"),
           ),
           IconButton(
             onPressed: isRemovable ? () => _removeMemberTaped(member) : null,
             icon: const Icon(Icons.remove_circle),
+            tooltip: "Remove User",
+            splashRadius: 25,
           )
         ],
       ),

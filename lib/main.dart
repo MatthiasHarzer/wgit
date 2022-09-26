@@ -8,6 +8,7 @@ import 'package:wgit/util/components.dart';
 import 'package:wgit/util/util.dart';
 import 'package:wgit/views/add_or_create_household/base.dart';
 import 'package:wgit/views/household/household_view.dart';
+import 'package:wgit/views/new_activity.dart';
 
 import 'drawer/drawer.dart';
 import 'firebase_options.dart';
@@ -31,7 +32,10 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var theme = ThemeData(
-      iconTheme: IconThemeData(color: Colors.grey[350]),
+      dividerTheme: const DividerThemeData(thickness: 0.3, space: 1),
+      iconTheme: IconThemeData(
+        color: Colors.grey[350],
+      ),
       switchTheme: SwitchThemeData(
         thumbColor: MaterialStateProperty.resolveWith((states) =>
             states.contains(MaterialState.selected)
@@ -46,23 +50,29 @@ class MyApp extends StatelessWidget {
         backgroundColor: Colors.deepOrange[700],
       ),
       buttonTheme: ButtonThemeData(
-          textTheme: ButtonTextTheme.accent,
-
-          colorScheme:
-              ColorScheme.fromSwatch(primarySwatch: Colors.deepOrange),
+        textTheme: ButtonTextTheme.accent,
+        colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.deepOrange),
       ),
       textButtonTheme: TextButtonThemeData(
         style: ButtonStyle(
           textStyle: MaterialStateProperty.all(
             const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w500,
-              color: Colors.deepOrange
-            )
-          )
-        )
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: Colors.deepOrange),
+          ),
+        ),
       ),
-
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ButtonStyle(
+          textStyle: MaterialStateProperty.all(
+            const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+      ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: Colors.grey.shade900,
         contentTextStyle: TextStyle(color: Colors.grey[200]),
@@ -72,12 +82,12 @@ class MyApp extends StatelessWidget {
       brightness: Brightness.dark,
     );
     theme = theme.copyWith(
-      textTheme: theme.textTheme.apply(
-        bodyColor: Colors.grey[300],
+        textTheme: theme.textTheme.apply(
+          bodyColor: Colors.grey[300],
 
-        // displayColor: Colors.black
-      ),
-    );
+          // displayColor: Colors.black
+        ),
+        colorScheme: theme.colorScheme.copyWith(secondary: Colors.orange[700]));
 
     return MaterialApp(
       title: 'WG IT',
@@ -121,6 +131,8 @@ class _MainPageState extends State<MainPage> {
           // Switch to any available household
           _switchToHousehold(households.first);
         }
+      } else if (households.isEmpty) {
+        _currentHousehold = null;
       }
       setState(() {});
     });
@@ -138,6 +150,25 @@ class _MainPageState extends State<MainPage> {
     });
   }
 
+  void _signInTaped() async {
+    _key.currentState!.openDrawer();
+    await Future.delayed(const Duration(milliseconds: 500));
+    await AuthService.signInWithGoogle();
+  }
+
+  void _newActivityTaped() {
+    if (_currentHousehold == null) {
+      Util.showSnackBar(context,
+          content:
+              const Text("Can't add an activity without an active household."));
+      return;
+    }
+    Navigator.push(
+        context,
+        Util.createScaffoldRoute(
+            view: NewActivity(houseHold: _currentHousehold!)));
+  }
+
   /// Builds the appbar title depending on [_currentHousehold]
   Widget _buildAppBarTitle() {
     if (_currentHousehold == null) {
@@ -145,12 +176,6 @@ class _MainPageState extends State<MainPage> {
     } else {
       return Text(_currentHousehold!.name);
     }
-  }
-
-  void _signInTaped() async {
-    _key.currentState!.openDrawer();
-    await Future.delayed( const Duration(milliseconds: 500));
-    await AuthService.signInWithGoogle();
   }
 
   /// Builds the widget if the user is not in any household
@@ -181,10 +206,12 @@ class _MainPageState extends State<MainPage> {
     return Text("");
   }
 
+  /// Builds the currently selected household or returns an info screen
   Widget _buildCurrentHouseHoldViewOrInfo() {
     if (_availableHouseholds.isEmpty) {
       return InfoActionWidget(
-        label: "No households are available. You can join one or create a new one",
+        label:
+            "No households are available. You can create a new one or join an existing household",
         buttonText: "JOIN OR CREATE",
         onTap: () {
           Navigator.push(
@@ -217,11 +244,19 @@ class _MainPageState extends State<MainPage> {
             ? _buildCurrentHouseHoldViewOrInfo()
             : _buildNoHouseholdView(),
       ),
-      // floatingActionButton: FloatingActionButton(
-      //   onPressed: _incrementCounter,
-      //   tooltip: 'Increment',
-      //   child: const Icon(Icons.add),
-      // ), // This trailing comma makes auto-formatting nicer for build methods.
+      floatingActionButton: Visibility(
+        visible: AuthService.signedIn,
+        child: FloatingActionButton(
+          onPressed: _newActivityTaped,
+          tooltip: "Add Activity",
+          child: const Icon(
+            Icons.add,
+            color: Colors.white,
+            size: 40,
+          ),
+        ),
+      ),
+      // This trailing comma makes auto-formatting nicer for build methods.
       drawer: MainPageDrawer(
         onSwitchTo: _switchToHousehold,
         currentHouseHold: _currentHousehold,

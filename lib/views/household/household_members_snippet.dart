@@ -65,15 +65,14 @@ class HouseHoldMembersSnippet extends StatelessWidget {
                 style: TextStyle(
                   color: Colors.grey[400],
                   fontWeight: FontWeight.w500,
-                  fontSize: 18,
+                  fontSize: 16,
                 ),
               ),
               if (houseHold.isUserAdmin(houseHold.thisUser))
-                MaterialButton(
+                TextButton(
                   onPressed: onManageTap,
-                  child: Text(
+                  child: const Text(
                     "MANAGE",
-                    style: AppTheme.materialButtonLabelStyle,
                   ),
                 ),
             ],

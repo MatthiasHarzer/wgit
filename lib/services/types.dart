@@ -25,6 +25,56 @@ class Cache<E, T> {
   }
 }
 
+class Activity {
+  late final String id;
+  late final String label;
+  String group = "all";
+  late final Map<AppUser, double> contributions;
+
+  Activity._(
+      {required this.id,
+      required this.label,
+      required this.group,
+      required this.contributions});
+
+  /// Creates an activity from a document snapshot
+  Future<Activity> fromDoc(DocumentSnapshot doc) async {
+    id = doc.id;
+
+    var data = doc.data() as Map<String, dynamic>;
+
+    label = data["label"];
+    group = data["group"];
+
+    Map<String, double> contr =
+        data["contributions"].cast<Map<String, double>>();
+
+    contributions = {};
+    for (var entry in contr.entries) {
+      var user = await RefService.resolveUid(entry.key);
+      if (user == null) continue;
+
+      contributions[user] = entry.value;
+    }
+
+    return Activity._(
+        id: id, label: label, group: group, contributions: contributions);
+  }
+
+  Activity.temp({required this.label, required this.contributions , this.group = "all",}){
+    id = "1";
+  }
+
+  Map<String, dynamic> toJson(){
+    return {
+      "id": id,
+      "label": label,
+      "group": group,
+      "contributions": contributions.map((key, value) => MapEntry(key.uid, value)),
+    };
+  }
+}
+
 class Role {
   static const MEMBER = "member";
   static const ADMIN = "admin";
@@ -84,10 +134,12 @@ class AppUser {
 }
 
 class HouseHoldMemberData {
-  late final double standing;
-  late final double totalPaid;
+  late final String id;
+  late double standing;
+  late double totalPaid;
 
   HouseHoldMemberData.fromDoc(DocumentSnapshot doc) {
+    id = doc.id;
     if (!doc.exists) {
       standing = 0;
       totalPaid = 0;
@@ -95,8 +147,15 @@ class HouseHoldMemberData {
       var data = doc.data() as Map<String, dynamic>;
 
       standing = data["standing"].toDouble();
-      totalPaid = data["total"].toDouble();
+      totalPaid = data["totalPaid"].toDouble();
     }
+  }
+
+  Map<String, dynamic> toJson(){
+    return {
+      "totalPaid": totalPaid,
+      "standing": standing,
+    };
   }
 }
 

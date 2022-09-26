@@ -23,23 +23,26 @@ class FirebaseService {
         .where("members", arrayContains: user!.uid)
         .get();
 
-    return await Future.wait(
-        [for (var doc in snapshot.docs) HouseHold.getCachedAndUpdateFromDocOrCreateNew(doc)]);
+    return await Future.wait([
+      for (var doc in snapshot.docs)
+        HouseHold.getCachedAndUpdateFromDocOrCreateNew(doc)
+    ]);
   }
 
-  static Stream<List<HouseHold>>  get availableHouseholds{
+  static Stream<List<HouseHold>> get availableHouseholds {
     StreamController<List<HouseHold>> controller = StreamController();
 
     AuthService.stateChange.listen((user) {
-      if(user == null){
+      if (user == null) {
         controller.add([]);
-      }else{
-
+      } else {
         RefService.householdsRef
-              .where("members", arrayContains: user.uid)
+            .where("members", arrayContains: user.uid)
             .snapshots()
-            .asyncMap((event) => Future.wait(
-            [for (var doc in event.docs) HouseHold.getCachedAndUpdateFromDocOrCreateNew(doc)]))
+            .asyncMap((event) => Future.wait([
+                  for (var doc in event.docs)
+                    HouseHold.getCachedAndUpdateFromDocOrCreateNew(doc)
+                ]))
             .listen((households) {
           controller.add(households);
         });
@@ -49,27 +52,25 @@ class FirebaseService {
   }
 
   /// Promotes the given [member] int the given [houseHold]
-  static Future promoteMember(HouseHold houseHold, AppUser member) async{
-    if(!houseHold.members.contains(member)) return;
+  static Future promoteMember(HouseHold houseHold, AppUser member) async {
+    if (!houseHold.members.contains(member)) return;
 
     var admins = [...houseHold.admins];
     admins.add(member);
 
-    await RefService.refOf(houseHoldId: houseHold.id).update({
-      "admins": admins.map((a)=>a.uid).toList()
-    });
+    await RefService.refOf(houseHoldId: houseHold.id)
+        .update({"admins": admins.map((a) => a.uid).toList()});
   }
 
   /// Removes the given [member] from the given [houseHold]
-  static Future removeMember(HouseHold houseHold, AppUser member) async{
-    if(!houseHold.members.contains(member)) return;
+  static Future removeMember(HouseHold houseHold, AppUser member) async {
+    if (!houseHold.members.contains(member)) return;
 
     var members = [...houseHold.members];
     members.remove(member);
 
-    await RefService.refOf(houseHoldId: houseHold.id).update({
-      "members": members.map((a)=>a.uid).toList()
-    });
+    await RefService.refOf(houseHoldId: houseHold.id)
+        .update({"members": members.map((a) => a.uid).toList()});
   }
 
   /// Adds a household with the current user as an admin
@@ -85,6 +86,43 @@ class FirebaseService {
         .get(); // Just to make sure the household was really created
 
     return HouseHold.getCachedAndUpdateFromDocOrCreateNew(doc);
+  }
+
+  static Future updateMemberData(
+      {required HouseHold houseHold,
+      required HouseHoldMemberData memberData}) async {
+    var ref = RefService.memberDataRefOf(
+        houseHoldId: houseHold.id, uid: memberData.id);
+
+    await ref.set(memberData.toJson());
+  }
+
+  static Future addActivity(
+      {required HouseHold houseHold, required Activity activity}) async {
+    var ref = RefService.refOfActivities(houseHoldId: houseHold.id);
+    print("adding ${activity.toJson()}");
+    var map = activity.toJson();
+    map["timestamp"] = FieldValue.serverTimestamp();
+    await ref.add(map);
+
+    print("Added $activity");
+
+    Future updateMB(AppUser member, double contribution) async {
+      var memberData = await houseHold.memberDataOf(member: member);
+      memberData.totalPaid += contribution;
+      await updateMemberData(houseHold: houseHold, memberData: memberData);
+    }
+
+    List<Future> futures = [];
+    for (var entry in activity.contributions.entries) {
+      var member = entry.key;
+      var contribution = entry.value;
+      futures.add(updateMB(member, contribution));
+    }
+
+    print("Updating meberdata.....");
+
+    await Future.wait(futures);
   }
 
   /// Initializes firebase, if not done already
@@ -124,7 +162,6 @@ class FirebaseService {
             "uid": user.uid,
           });
         }
-
       }
     });
 
