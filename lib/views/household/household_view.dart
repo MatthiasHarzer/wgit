@@ -1,5 +1,6 @@
 import 'package:expandable/expandable.dart';
 import 'package:flutter/material.dart';
+import 'package:wgit/views/household/household_standings.dart';
 import 'package:wgit/views/household/manage_members_view.dart';
 
 import '../../services/types.dart';
@@ -26,13 +27,6 @@ class _HouseHoldViewState extends State<HouseHoldView> {
     houseHold.onChange(() => {
           if (mounted) {setState(() {})}
         });
-
-    houseHold.getGroupsStream().listen((event) {
-      print("------- GROUPS UPDATE --------");
-      for(var d in event){
-       print(d.name);
-      }
-    });
   }
 
   /// An empty widget
@@ -132,8 +126,14 @@ class _HouseHoldViewState extends State<HouseHoldView> {
             ),
             initialExpanded: true,
         ),
-
-        SizedBox(
+        const Divider(),
+        _buildItem(
+            title: "STANDINGS",
+            content: HouseHoldStandings(
+              houseHold: houseHold,
+            ),
+        ),
+        const SizedBox(
           height: 60,
         )
       ],

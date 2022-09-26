@@ -50,6 +50,7 @@ class Util {
   }
 
   static String formatAmount(double m){
+    m = double.parse(m.toStringAsFixed(2));
     int l = m.toInt().toString().length + 3;
     return m.toString().padRight(l, "0");
   }
