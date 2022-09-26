@@ -4,6 +4,9 @@ import 'package:wgit/services/config_service.dart';
 import 'package:wgit/services/firebase/auth_service.dart';
 import 'package:wgit/services/firebase/firebase_service.dart';
 import 'package:wgit/services/types.dart';
+import 'package:wgit/util/components.dart';
+import 'package:wgit/util/util.dart';
+import 'package:wgit/views/add_or_create_household/base.dart';
 import 'package:wgit/views/household/household_view.dart';
 
 import 'drawer/main_page_drawer.dart';
@@ -31,20 +34,33 @@ class MyApp extends StatelessWidget {
       iconTheme: IconThemeData(color: Colors.grey[350]),
       switchTheme: SwitchThemeData(
         thumbColor: MaterialStateProperty.resolveWith((states) =>
-        states.contains(MaterialState.selected)
-            ? Colors.deepOrangeAccent
-            : null),
+            states.contains(MaterialState.selected)
+                ? Colors.deepOrangeAccent
+                : null),
         trackColor: MaterialStateProperty.resolveWith((states) =>
-        states.contains(MaterialState.selected)
-            ? Colors.deepOrange[500]
-            : null),
+            states.contains(MaterialState.selected)
+                ? Colors.deepOrange[500]
+                : null),
       ),
       appBarTheme: AppBarTheme(
         backgroundColor: Colors.deepOrange[700],
       ),
       buttonTheme: ButtonThemeData(
           textTheme: ButtonTextTheme.accent,
-          colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.deepOrange)
+
+          colorScheme:
+              ColorScheme.fromSwatch(primarySwatch: Colors.deepOrange),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: ButtonStyle(
+          textStyle: MaterialStateProperty.all(
+            const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w500,
+              color: Colors.deepOrange
+            )
+          )
+        )
       ),
 
       snackBarTheme: SnackBarThemeData(
@@ -53,11 +69,12 @@ class MyApp extends StatelessWidget {
         actionTextColor: Colors.deepOrangeAccent,
       ),
       primarySwatch: Colors.deepOrange,
-      brightness: Brightness.dark,);
-
+      brightness: Brightness.dark,
+    );
     theme = theme.copyWith(
       textTheme: theme.textTheme.apply(
-          bodyColor: Colors.grey[300],
+        bodyColor: Colors.grey[300],
+
         // displayColor: Colors.black
       ),
     );
@@ -80,18 +97,20 @@ class MainPage extends StatefulWidget {
 class _MainPageState extends State<MainPage> {
   HouseHold? _currentHousehold;
   final GlobalKey<ScaffoldState> _key = GlobalKey();
+  List<HouseHold> _availableHouseholds = [];
 
   @override
   void initState() {
     super.initState();
 
     AuthService.stateChange.listen((u) => setState(() {
-      if(u == null){
-        _currentHousehold = null;
-      }
-    }));
+          if (u == null) {
+            _currentHousehold = null;
+          }
+        }));
 
     FirebaseService.availableHouseholds.listen((households) {
+      _availableHouseholds = households;
       if (_currentHousehold == null && households.isNotEmpty) {
         var resolved = households.where(
             (household) => household.id == ConfigService.currentHouseholdId);
@@ -103,6 +122,7 @@ class _MainPageState extends State<MainPage> {
           _switchToHousehold(households.first);
         }
       }
+      setState(() {});
     });
   }
 
@@ -129,6 +149,7 @@ class _MainPageState extends State<MainPage> {
 
   void _signInTaped() async {
     _key.currentState!.openDrawer();
+    await Future.delayed( const Duration(milliseconds: 500));
     await AuthService.signInWithGoogle();
   }
 
@@ -160,8 +181,23 @@ class _MainPageState extends State<MainPage> {
     return Text("");
   }
 
-  Widget _buildCurrentHouseHoldViewOrSpinner(){
-    if(_currentHousehold == null){
+  Widget _buildCurrentHouseHoldViewOrInfo() {
+    if (_availableHouseholds.isEmpty) {
+      return InfoActionWidget(
+        label: "No households are available. You can join one or create a new one",
+        buttonText: "JOIN OR CREATE",
+        onTap: () {
+          Navigator.push(
+            context,
+            Util.createScaffoldRoute(
+                view: JoinOrCreateHouseholdView(
+              onFinished: _switchToHousehold,
+            )),
+          );
+        },
+      );
+    }
+    if (_currentHousehold == null) {
       return const CircularProgressIndicator();
     }
     return HouseHoldView(houseHold: _currentHousehold!);
@@ -178,7 +214,7 @@ class _MainPageState extends State<MainPage> {
       ),
       body: Center(
         child: AuthService.signedIn
-            ? _buildCurrentHouseHoldViewOrSpinner()
+            ? _buildCurrentHouseHoldViewOrInfo()
             : _buildNoHouseholdView(),
       ),
       // floatingActionButton: FloatingActionButton(
@@ -188,6 +224,7 @@ class _MainPageState extends State<MainPage> {
       // ), // This trailing comma makes auto-formatting nicer for build methods.
       drawer: MainPageDrawer(
         onSwitchTo: _switchToHousehold,
+        currentHouseHold: _currentHousehold,
       ),
     );
   }

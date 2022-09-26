@@ -48,8 +48,6 @@ class _HouseHoldViewState extends State<HouseHoldView> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.houseHold == null) return _empty();
-
     return Column(
       children: [
         HouseHoldMembersSnippet(

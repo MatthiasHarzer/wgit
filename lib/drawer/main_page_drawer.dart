@@ -8,8 +8,9 @@ import 'households_widget.dart';
 
 class MainPageDrawer extends StatefulWidget {
   final Function(HouseHold) onSwitchTo;
+  final HouseHold? currentHouseHold;
 
-  const MainPageDrawer({required this.onSwitchTo, Key? key}) : super(key: key);
+  const MainPageDrawer({required this.onSwitchTo, required this.currentHouseHold, Key? key}) : super(key: key);
 
   @override
   State<MainPageDrawer> createState() => _MainPageDrawerState();
@@ -39,7 +40,7 @@ class _MainPageDrawerState extends State<MainPageDrawer> {
   Widget _buildHeader(String title) {
     title = title.toUpperCase();
     return Container(
-      margin: const EdgeInsets.only(left: 10, top: 5),
+      margin: const EdgeInsets.only(left: 10),
       child: Text(
         title,
         style: AppTheme.drawerText,
@@ -78,7 +79,6 @@ class _MainPageDrawerState extends State<MainPageDrawer> {
             Visibility(
               visible: AuthService.signedIn,
               child: HouseholdsWidget(
-                header: _buildHeader("Households"),
                 onSwitchTo: _switchToHousehold,
               ),
             ),

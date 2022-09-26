@@ -62,22 +62,21 @@ class _JoinOrCreateHouseholdViewState extends State<JoinOrCreateHouseholdView> {
           children: [
             const Padding(
               padding: EdgeInsets.all(8.0),
-              child: Text("Do you want to join or add a household?", style: TextStyle(
-                fontSize: 20, fontWeight: FontWeight.w500
-              ),),
+              child: Text("Do you want to join or create a new household?", style: TextStyle(
+                fontSize: 20, fontWeight: FontWeight.w500), textAlign: TextAlign.center, ),
             ),
 
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
 
-                MaterialButton(
+                TextButton(
                     onPressed: _onCreate,
-                    child: Text("CREATE", style: buttonStyle)
+                    child: const Text("CREATE")
                 ),
-                MaterialButton(
+                TextButton(
                     onPressed: _onJoin,
-                    child: Text("JOIN", style: buttonStyle)
+                    child: const Text("JOIN")
                 ),
               ],
             )

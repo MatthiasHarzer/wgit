@@ -50,20 +50,18 @@ class ConfirmDialog {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              MaterialButton(
-                  onPressed: _onCancel,
-                  child: Text(cancel,
-                      style: TextStyle(
-                          color: _theme.colorScheme.primary,
-                          fontSize: _buttonSize))),
-              MaterialButton(
-                  onPressed: _onConfirm,
-                  child: Text(
-                    confirm,
-                    style: TextStyle(
-                        color: _theme.colorScheme.primary,
-                        fontSize: _buttonSize),
-                  )),
+              TextButton(
+                onPressed: _onCancel,
+                child: Text(
+                  cancel,
+                ),
+              ),
+              TextButton(
+                onPressed: _onConfirm,
+                child: Text(
+                  confirm,
+                ),
+              ),
             ],
           ),
         ],
@@ -92,13 +90,13 @@ class UserTextInputDialog {
 
   UserTextInputDialog(
       {required this.context,
-        required this.title,
-        required this.placeHolder,
-        this.cancel = "CANCEL",
-        this.submit = "SUBMIT",
-        this.onCancel,
-        this.onSubmit,
-        Key? key});
+      required this.title,
+      required this.placeHolder,
+      this.cancel = "CANCEL",
+      this.submit = "SUBMIT",
+      this.onCancel,
+      this.onSubmit,
+      Key? key});
 
   void _onSubmit() {
     if (onSubmit != null) onSubmit!(_inputText);
@@ -113,51 +111,86 @@ class UserTextInputDialog {
   }
 
   Widget get widget => AlertDialog(
-    title: Text(
-      title,
-      textAlign: TextAlign.left,
-      style: TextStyle(
-          fontWeight: FontWeight.bold,
-          fontSize: 22,
-          color: Colors.grey[300]),
-    ),
-    content: TextFormField(
-      onChanged: (text)=>_inputText=text,
-
-      decoration: InputDecoration(
-        border: const UnderlineInputBorder(),
-        labelText: placeHolder,
-      ),
-    ),
-    actions: [
-      Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          MaterialButton(
-              onPressed: _onCancel,
-              child: Text(cancel,
-                  style: TextStyle(
-                      color: _theme.colorScheme.primary,
-                      fontSize: _buttonSize))),
-          MaterialButton(
-              onPressed: _onSubmit,
-              child: Text(
-                submit,
-                style: TextStyle(
-                    color: _theme.colorScheme.primary,
-                    fontSize: _buttonSize),
-              )),
+        title: Text(
+          title,
+          textAlign: TextAlign.left,
+          style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 22,
+              color: Colors.grey[300]),
+        ),
+        content: TextFormField(
+          onChanged: (text) => _inputText = text,
+          decoration: InputDecoration(
+            border: const UnderlineInputBorder(),
+            labelText: placeHolder,
+          ),
+        ),
+        actions: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              TextButton(
+                onPressed: _onCancel,
+                child: Text(
+                  cancel,
+                ),
+              ),
+              TextButton(
+                onPressed: _onSubmit,
+                child: Text(
+                  submit,
+                ),
+              ),
+            ],
+          ),
         ],
-      ),
-    ],
-  );
+      );
 
   void show() {
     showDialog(context: context, builder: (ctx) => widget);
   }
 }
 
-Widget buildCircularAvatar({required String url, required double dimension}){
+/// Displays a given text with an aciton button
+class InfoActionWidget extends StatelessWidget {
+  final String label;
+  final String buttonText;
+  final VoidCallback onTap;
+
+  const InfoActionWidget(
+      {required this.label,
+      required this.buttonText,
+      required this.onTap,
+      Key? key})
+      : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Text(
+            label,
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
+            textAlign: TextAlign.center,
+          ),
+        ),
+        TextButton(
+          onPressed: onTap,
+          child: Text(
+            buttonText,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+Widget buildCircularAvatar({required String url, required double dimension}) {
   return SizedBox.square(
     dimension: dimension,
     child: CircleAvatar(
@@ -167,8 +200,8 @@ Widget buildCircularAvatar({required String url, required double dimension}){
         padding: const EdgeInsets.all(2.0),
         child: ClipOval(
             child: Image.network(
-              url,
-            )),
+          url,
+        )),
       ),
     ),
   );

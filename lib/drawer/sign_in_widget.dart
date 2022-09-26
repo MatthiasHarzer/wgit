@@ -16,10 +16,20 @@ class _SignInWidgetState extends State<SignInWidget> {
   bool oldSignedIn = false;
 
   @override
-  void initState(){
+  void initState() {
     super.initState();
+    working = false;
 
-    AuthService.stateChange.listen((e)=>setState((){}));
+    AuthService.onWorkingUpdate((w) {
+      print("MOUNTED $mounted with working: $w");
+      if (mounted) {
+        setState(() {
+          working = w;
+        });
+      }
+    });
+
+    AuthService.stateChange.listen((e) => setState(() {}));
   }
 
   /// Generates the leading widget for the list tile
@@ -37,7 +47,7 @@ class _SignInWidgetState extends State<SignInWidget> {
           padding: const EdgeInsets.all(2.0),
           child: ClipOval(
               child: Image.network(
-                FirebaseService.user!.photoURL,
+            FirebaseService.user!.photoURL,
           )),
         ),
       );
@@ -75,9 +85,9 @@ class _SignInWidgetState extends State<SignInWidget> {
   Widget _getSubtitle() {
     String text;
     if (working) {
-      if(oldSignedIn){
+      if (oldSignedIn) {
         text = "Signing you out...";
-      }else{
+      } else {
         text = "Signing you in...";
       }
     } else if (AuthService.signedIn) {
@@ -90,24 +100,20 @@ class _SignInWidgetState extends State<SignInWidget> {
 
   /// Signes the user in or out, depending on current state
   void _handleTap() async {
-    setState(() {
-      working = true;
-    });
-
     String snackBarText;
     oldSignedIn = AuthService.signedIn;
     if (AuthService.signedIn) {
       var dialog = ConfirmDialog(
           context: context,
           title: "Are you sure you want to sign out?",
-          confirm: "SIGN OUT")..show();
+          confirm: "SIGN OUT")
+        ..show();
       bool confirm = await dialog.future;
 
-      if(confirm){
+      if (confirm) {
         await AuthService.signOut();
         snackBarText = "Successfully signed out";
       }
-
     } else {
       bool success = await AuthService.signInWithGoogle();
     }
@@ -115,10 +121,6 @@ class _SignInWidgetState extends State<SignInWidget> {
     if (!mounted) return;
 
     // Util.showSnackBar(context, content: Text(snackBarText));
-
-    setState(() {
-      working = false;
-    });
 
     // Navigator.pop(context);
   }

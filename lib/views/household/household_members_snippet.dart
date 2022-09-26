@@ -64,6 +64,7 @@ class HouseHoldMembersSnippet extends StatelessWidget {
                 "MEMBERS",
                 style: TextStyle(
                   color: Colors.grey[400],
+                  fontWeight: FontWeight.w500,
                   fontSize: 18,
                 ),
               ),

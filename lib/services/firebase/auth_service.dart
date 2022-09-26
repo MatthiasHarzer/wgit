@@ -9,6 +9,12 @@ import '../types.dart';
 
 /// Responsible for user management
 class AuthService {
+  static Function(bool) _workingUpdate = (_) =>null;
+
+  static void onWorkingUpdate(Function(bool) cb){
+    _workingUpdate = cb;
+  }
+
   /// The current firebase user
   static User? get _user => FirebaseAuth.instance.currentUser;
 
@@ -24,6 +30,7 @@ class AuthService {
   /// Returns true if the operation was successfully
   static Future<bool> signInWithGoogle() async {
     User? u;
+    _workingUpdate(true);
     if (kIsWeb) {
       u =
           (await FirebaseAuth.instance.signInWithPopup(GoogleAuthProvider()))
@@ -55,13 +62,16 @@ class AuthService {
           message:
           "${Platform.localeName} is not supported for login with google");
     }
+    _workingUpdate(false);
     return u != null;
   }
 
   /// Signs the current user out
   static Future signOut() async{
+    _workingUpdate(true);
     await FirebaseAuth.instance.signOut();
     GoogleSignIn googleSignIn = GoogleSignIn();
     await googleSignIn.signOut();
+    _workingUpdate(false);
   }
 }
