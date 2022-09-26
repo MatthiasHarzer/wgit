@@ -37,7 +37,7 @@ class _JoinOrCreateHouseholdViewState extends State<JoinOrCreateHouseholdView> {
 
 
   void _onCreate(){
-    var dialog = UserTextInputDialog(
+    var dialog = UserInputDialog(
       context: context,
       title: "Please enter a name for the household",
       placeHolder: "Household Name",

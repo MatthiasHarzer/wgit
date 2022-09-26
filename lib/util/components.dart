@@ -10,8 +10,6 @@ class ConfirmDialog {
   final VoidCallback? onConfirm;
   final VoidCallback? onCancel;
 
-  ThemeData get _theme => Theme.of(context);
-  final double _buttonSize = 18;
   final Completer<bool> _completer = Completer();
 
   Future<bool> get future => _completer.future;
@@ -72,7 +70,7 @@ class ConfirmDialog {
   }
 }
 
-class UserTextInputDialog {
+class UserInputDialog {
   final BuildContext context;
   final String title;
   final String placeHolder;
@@ -81,14 +79,13 @@ class UserTextInputDialog {
   final Function(String)? onSubmit;
   final VoidCallback? onCancel;
 
-  ThemeData get _theme => Theme.of(context);
-  final double _buttonSize = 18;
   final Completer<String?> _completer = Completer();
   String _inputText = "";
+  TextInputType inputType;
 
   Future<String?> get future => _completer.future;
 
-  UserTextInputDialog(
+  UserInputDialog(
       {required this.context,
       required this.title,
       required this.placeHolder,
@@ -96,6 +93,7 @@ class UserTextInputDialog {
       this.submit = "SUBMIT",
       this.onCancel,
       this.onSubmit,
+        this.inputType = TextInputType.text,
       Key? key});
 
   void _onSubmit() {
@@ -121,6 +119,7 @@ class UserTextInputDialog {
         ),
         content: TextFormField(
           onChanged: (text) => _inputText = text,
+          keyboardType: inputType,
           decoration: InputDecoration(
             border: const UnderlineInputBorder(),
             labelText: placeHolder,

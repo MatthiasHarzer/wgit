@@ -1,5 +1,6 @@
 import 'package:expandable/expandable.dart';
 import 'package:flutter/material.dart';
+import 'package:wgit/util/components.dart';
 import 'package:wgit/views/household/household_standings.dart';
 import 'package:wgit/views/household/manage_members_view.dart';
 
@@ -24,14 +25,29 @@ class _HouseHoldViewState extends State<HouseHoldView> {
   void initState() {
     super.initState();
 
-    houseHold.onChange(() => {
-          if (mounted) {setState(() {})}
-        });
+    houseHold.onChange(() =>
+    {
+      if (mounted) {setState(() {})}
+    });
   }
 
-  /// An empty widget
-  Widget _empty() {
-    return Container();
+  Future _sendMoneyToMemberTapped(AppUser member) async {
+
+    var dialog = UserInputDialog(
+        context: context,
+        title: "How much money did you exchange with ${member.displayName}?",
+        inputType: TextInputType.number,
+        placeHolder: "Amount",
+      submit: "EXCHANGE",
+    )..show();
+    String retval = await dialog.future ?? "";
+    double asDouble = double.tryParse(retval) ?? 0;
+
+    print("SENDING $asDouble to ${member.displayName}");
+
+    if(asDouble <= 0) return;
+
+    await houseHold.exchangeMoney(from: houseHold.thisUser, to: member, amount: asDouble);
   }
 
   void _openMemberManagement() {
@@ -46,11 +62,10 @@ class _HouseHoldViewState extends State<HouseHoldView> {
     );
   }
 
-  Widget _buildItem(
-      {required String title,
-      required Widget content,
-      Widget? action,
-      bool initialExpanded = false}) {
+  Widget _buildItem({required String title,
+    required Widget content,
+    Widget? action,
+    bool initialExpanded = false}) {
     ExpandableThemeData theme;
 
     /// Not ideal but with a custom expandable controller the icon wouldn't be reactive, so /shrug
@@ -111,27 +126,29 @@ class _HouseHoldViewState extends State<HouseHoldView> {
           ),
           action: houseHold.isUserAdmin(houseHold.thisUser)
               ? TextButton(
-                  onPressed: _openMemberManagement,
-                  child: const Text(
-                    "MANAGE",
-                  ),
-                )
+            onPressed: _openMemberManagement,
+            child: const Text(
+              "MANAGE",
+            ),
+          )
               : null,
         ),
         const Divider(),
         _buildItem(
-            title: "ACTIVITIES",
-            content: HouseHoldActivitiesView(
-              houseHold: houseHold,
-            ),
-            initialExpanded: true,
+          title: "ACTIVITIES",
+          content: HouseHoldActivitiesView(
+            houseHold: houseHold,
+          ),
+          initialExpanded: true,
         ),
         const Divider(),
         _buildItem(
-            title: "STANDINGS",
-            content: HouseHoldStandings(
-              houseHold: houseHold,
-            ),
+          title: "STANDINGS",
+          content: HouseHoldStandings(
+            houseHold: houseHold,
+            onMoneySendTap: _sendMoneyToMemberTapped,
+          ),
+          initialExpanded: true,
         ),
         const SizedBox(
           height: 60,

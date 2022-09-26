@@ -164,7 +164,7 @@ class FirebaseService {
   /// Creates a new activity, or if the activity has an id, edits the existing one
   static Future submitActivity(
       {required HouseHold houseHold, required Activity activity}) async {
-    print("ID IS ${activity.id}");
+    // print("ID IS ${activity.id}");
 
     if (activity.id == null) {
       /// It is a new activity
@@ -174,6 +174,7 @@ class FirebaseService {
       await _editActivity(houseHold: houseHold, activity: activity);
     }
   }
+
 
   static Future createGroup(
       {required String houseHoldId, required String name, required List<
@@ -192,6 +193,8 @@ class FirebaseService {
       "members": members.map((m) => m.uid).toList(),
     });
   }
+
+
 
   /// Initializes firebase, if not done already
   static void ensureInitialized() {

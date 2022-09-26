@@ -164,6 +164,8 @@ class AppUser {
   late final String displayName;
   late final String photoURL;
 
+  bool get isSelf => uid == AuthService.appUser?.uid;
+
   AppUser._(
       {required this.uid, required this.displayName, required this.photoURL});
 
@@ -246,9 +248,6 @@ class HouseHold {
   late String name;
   late List<AppUser> members;
   late List<AppUser> admins;
-
-
-  late final Cache<String, HouseHoldMemberData> _memberInfoCache;
 
   final List<StreamController<List<Activity>>> _activitiesStreamControllers =
       [];
@@ -375,11 +374,6 @@ class HouseHold {
       required this.name,
       required this.members,
       required this.admins}) {
-    _memberInfoCache = Cache.withResolver(resolver: (String uid) async {
-      var ref = RefService.memberDataRefOf(houseHoldId: id, uid: uid);
-      var doc = await ref.get();
-      return HouseHoldMemberData.fromDoc(doc);
-    });
     _setup();
   }
 
@@ -444,6 +438,19 @@ class HouseHold {
   HouseHoldMemberData memberDataOf({required AppUser member}) {
     if(memberData.keys.contains(member.uid)) return memberData[member.uid]!;
     return HouseHoldMemberData.emptyOf(member);
+  }
+
+  Future exchangeMoney({required AppUser from, required AppUser to, required double amount})async{
+    var fromMemberData = memberDataOf(member: from);
+    var toMemberData = memberDataOf(member: to);
+
+    fromMemberData.totalPaid += amount;
+    toMemberData.totalPaid -= amount;
+
+    await Future.wait([
+      FirebaseService.updateMemberData(houseHold: this, memberData: fromMemberData),
+      FirebaseService.updateMemberData(houseHold: this, memberData: toMemberData)
+    ]);
   }
 
   @override
