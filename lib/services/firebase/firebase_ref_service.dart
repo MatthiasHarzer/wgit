@@ -34,15 +34,30 @@ class RefService {
     return refOf(houseHoldId: houseHoldId).collection("activities");
   }
 
-  static DocumentReference refOfActivity({required String houseHoldId, required String activityId}){
+  static DocumentReference refOfActivity(
+      {required String houseHoldId, required String activityId}) {
     return refOfActivities(houseHoldId: houseHoldId).doc(activityId);
+  }
+
+  static CollectionReference membersDataRefOf({required String houseHoldId}){
+    return refOf(houseHoldId: houseHoldId).collection("member-data");
   }
 
   /// Retunrs the ref of the given users data of a household
   static DocumentReference memberDataRefOf(
       {required String houseHoldId, required String uid}) {
-    return refOf(houseHoldId: houseHoldId).collection("member-data").doc(uid);
+    return membersDataRefOf(houseHoldId: houseHoldId).doc(uid);
   }
+
+  static CollectionReference groupsRefOf({required String houseHoldId}) {
+    return refOf(houseHoldId: houseHoldId).collection("group-data");
+  }
+
+  static DocumentReference groupRefOf(
+      {required String houseHoldId, required String groupId}) {
+    return groupsRefOf(houseHoldId: houseHoldId).doc(groupId);
+  }
+
 
   /// Gets users information by its user id
   static Future<AppUser?> resolveUid(String uid) async {

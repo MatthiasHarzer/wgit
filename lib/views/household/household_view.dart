@@ -26,6 +26,13 @@ class _HouseHoldViewState extends State<HouseHoldView> {
     houseHold.onChange(() => {
           if (mounted) {setState(() {})}
         });
+
+    houseHold.getGroupsStream().listen((event) {
+      print("------- GROUPS UPDATE --------");
+      for(var d in event){
+       print(d.name);
+      }
+    });
   }
 
   /// An empty widget

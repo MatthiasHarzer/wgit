@@ -1,6 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:wgit/services/firebase/firebase_service.dart';
 
+import '../services/firebase/firebase_ref_service.dart';
 import '../services/types.dart';
 import '../util/components.dart';
 import '../util/util.dart';
@@ -35,8 +38,12 @@ class _EditOrNewActivityState extends State<EditOrNewActivity> {
     if(widget.existingActivity != null){
       isEditMode = true;
       tempActivity = widget.existingActivity!.copy();
+    }else{
+      tempActivity.contributions = {for(var user in availableUsers) user: 0};
     }
   }
+
+
 
   void _close(){
     FocusManager.instance.primaryFocus?.unfocus();

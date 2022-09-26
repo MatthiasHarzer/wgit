@@ -9,6 +9,7 @@ import 'firebase_ref_service.dart';
 
 /// Dart interface to communicate with the firebase platform
 class FirebaseService {
+  static FirebaseFirestore get _firestore => FirebaseFirestore.instance;
   static bool _initialized = false;
 
   static AppUser? get user => AuthService.appUser;
@@ -39,10 +40,11 @@ class FirebaseService {
         RefService.householdsRef
             .where("members", arrayContains: user.uid)
             .snapshots()
-            .asyncMap((event) => Future.wait([
-                  for (var doc in event.docs)
-                    HouseHold.getCachedAndUpdateFromDocOrCreateNew(doc)
-                ]))
+            .asyncMap((event) =>
+            Future.wait([
+              for (var doc in event.docs)
+                HouseHold.getCachedAndUpdateFromDocOrCreateNew(doc)
+            ]))
             .listen((households) {
           controller.add(households);
         });
@@ -88,41 +90,48 @@ class FirebaseService {
     return HouseHold.getCachedAndUpdateFromDocOrCreateNew(doc);
   }
 
-  static Future updateMemberData(
-      {required HouseHold houseHold,
-      required HouseHoldMemberData memberData}) async {
+  static Future updateMemberData({required HouseHold houseHold,
+    required HouseHoldMemberData memberData}) async {
     var ref = RefService.memberDataRefOf(
         houseHoldId: houseHold.id, uid: memberData.id);
 
     await ref.set(memberData.toJson());
   }
 
-  static Future _addActivity({required HouseHold houseHold, required Activity activity})async{
+  static Future _addActivity(
+      {required HouseHold houseHold, required Activity activity}) async {
+    if (activity.contributions.keys.isEmpty) return;
     var ref = RefService.refOfActivities(houseHoldId: houseHold.id);
     var map = activity.toJson();
     map["timestamp"] = FieldValue.serverTimestamp();
     await ref.add(map);
 
+    var relativeValue = activity.total / activity.contributions.keys.length;
 
-    Future updateMB(AppUser member, double contribution) async {
-      var memberData = await houseHold.memberDataOf(member: member);
-      memberData.totalPaid += contribution;
-      await updateMemberData(houseHold: houseHold, memberData: memberData);
-    }
+    var batch = _firestore.batch();
 
-    List<Future> futures = [];
     for (var entry in activity.contributions.entries) {
-      var member = entry.key;
+      var user = entry.key;
       var contribution = entry.value;
-      futures.add(updateMB(member, contribution));
-    }
 
-    await Future.wait(futures);
+      var currentMemberData = houseHold.memberDataOf(member: user);
+      currentMemberData.totalPaid += contribution;
+      currentMemberData.totalShouldPay += relativeValue;
+
+      batch.set(
+          RefService.memberDataRefOf(houseHoldId: houseHold.id, uid: user.uid),
+          currentMemberData.toJson()
+      );
+    }
+    await batch.commit();
   }
 
 
-  static Future _editActivity({required HouseHold houseHold, required Activity activity})async{
-    var ref = RefService.refOfActivity(houseHoldId: houseHold.id, activityId: activity.id!);
+  static Future _editActivity(
+      {required HouseHold houseHold, required Activity activity}) async {
+    if (activity.contributions.keys.isEmpty) return;
+    var ref = RefService.refOfActivity(
+        houseHoldId: houseHold.id, activityId: activity.id!);
 
     var existingDoc = await ref.get();
     var existingActivity = await Activity.fromDoc(existingDoc);
@@ -130,39 +139,58 @@ class FirebaseService {
     var map = activity.toJson();
     await ref.update(map);
 
+    var totalDelta = activity.total - existingActivity.total;
+    var relativeDeltaValue = totalDelta / activity.contributions.keys.length;
 
-    Future updateMB(AppUser member, double contribution) async {
-      var memberData = await houseHold.memberDataOf(member: member);
-      memberData.totalPaid += contribution;
-      await updateMemberData(houseHold: houseHold, memberData: memberData);
-    }
 
-    List<Future> futures = [];
+    var batch = _firestore.batch();
+
     for (var entry in activity.contributions.entries) {
-      var member = entry.key;
-      var existingContribution = existingActivity.getContributionOf(member);
-      var contribution = entry.value;
-      futures.add(updateMB(member, contribution - existingContribution)); // Only take delta in account
-    }
+      var user = entry.key;
+      var deltaContribution = entry.value - existingActivity.getContributionOf(user);
 
-    await Future.wait(futures);
+      var currentMemberData = houseHold.memberDataOf(member: user);
+      currentMemberData.totalPaid += deltaContribution;
+      currentMemberData.totalShouldPay += relativeDeltaValue;
+
+      batch.set(
+          RefService.memberDataRefOf(houseHoldId: houseHold.id, uid: user.uid),
+          currentMemberData.toJson()
+      );
+    }
+    await batch.commit();
   }
 
   /// Creates a new activity, or if the activity has an id, edits the existing one
   static Future submitActivity(
       {required HouseHold houseHold, required Activity activity}) async {
-
     print("ID IS ${activity.id}");
 
-    if(activity.id == null){
+    if (activity.id == null) {
       /// It is a new activity
       await _addActivity(houseHold: houseHold, activity: activity);
-    }else{
+    } else {
       /// Activity is edited
       await _editActivity(houseHold: houseHold, activity: activity);
     }
+  }
 
+  static Future createGroup(
+      {required String houseHoldId, required String name, required List<
+          AppUser> members, String? groupId}) async {
+    if (groupId != null) {
+      await RefService.groupRefOf(houseHoldId: houseHoldId, groupId: groupId)
+          .set({
+        "name": name,
+        "members": members.map((m) => m.uid).toList(),
+      });
+      return;
+    }
 
+    await RefService.groupsRefOf(houseHoldId: houseHoldId).add({
+      "name": name,
+      "members": members.map((m) => m.uid).toList(),
+    });
   }
 
   /// Initializes firebase, if not done already
