@@ -9,7 +9,7 @@ import 'package:wgit/util/util.dart';
 import 'package:wgit/views/add_or_create_household/base.dart';
 import 'package:wgit/views/household/household_view.dart';
 
-import 'drawer/main_page_drawer.dart';
+import 'drawer/drawer.dart';
 import 'firebase_options.dart';
 import 'theme.dart';
 

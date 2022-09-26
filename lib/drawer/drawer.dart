@@ -1,16 +1,21 @@
+import 'package:expandable/expandable.dart';
 import 'package:flutter/material.dart';
+import 'package:wgit/drawer/current_household_actions.dart';
 import 'package:wgit/drawer/sign_in_widget.dart';
 import 'package:wgit/services/firebase/auth_service.dart';
-import '../services/types.dart';
 
+import '../services/types.dart';
 import '../theme.dart';
+import '../util/util.dart';
 import 'households_widget.dart';
 
 class MainPageDrawer extends StatefulWidget {
   final Function(HouseHold) onSwitchTo;
   final HouseHold? currentHouseHold;
 
-  const MainPageDrawer({required this.onSwitchTo, required this.currentHouseHold, Key? key}) : super(key: key);
+  const MainPageDrawer(
+      {required this.onSwitchTo, required this.currentHouseHold, Key? key})
+      : super(key: key);
 
   @override
   State<MainPageDrawer> createState() => _MainPageDrawerState();
@@ -48,6 +53,37 @@ class _MainPageDrawerState extends State<MainPageDrawer> {
     );
   }
 
+  /// Builds an expandable drawer item
+  Widget _buildExpandable({
+    required String title,
+    required Widget content,
+  }) {
+    return ExpandablePanel(
+      theme: ExpandableThemeData(
+        iconColor: Colors.grey[400],
+        iconPlacement: ExpandablePanelIconPlacement.left,
+        iconPadding: const EdgeInsets.only(top: 13),
+        iconRotationAngle: Util.degToRad(90),
+        collapseIcon: Icons.keyboard_arrow_right,
+        expandIcon: Icons.keyboard_arrow_right,
+      ),
+      header: SizedBox(
+        height: 50,
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: Text(
+            title.toUpperCase(),
+            style: AppTheme.drawerText,
+            softWrap: true,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ),
+      collapsed: Container(),
+      expanded: content,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Theme(
@@ -75,12 +111,33 @@ class _MainPageDrawerState extends State<MainPageDrawer> {
               ),
             ),
             const SignInWidget(),
-            const Divider(),
+            Divider(
+              color: Colors.grey[600],
+              height: 5,
+              thickness: 0.2,
+            ),
             Visibility(
               visible: AuthService.signedIn,
-              child: HouseholdsWidget(
-                onSwitchTo: _switchToHousehold,
-              ),
+              child: Column(children: [
+                _buildExpandable(
+                  title: "HOUSEHOLDS",
+                  content: HouseholdsWidget(
+                    onSwitchTo: _switchToHousehold,
+                  ),
+                ),
+                Divider(
+                  color: Colors.grey[600],
+                  height: 1,
+                  thickness: 0.2,
+                ),
+                if (widget.currentHouseHold != null)
+                  _buildExpandable(
+                    title: widget.currentHouseHold!.name,
+                    content: DrawerCurrentHouseHoldActions(
+                      houseHold: widget.currentHouseHold!,
+                    ),
+                  ),
+              ]),
             ),
           ],
         ),

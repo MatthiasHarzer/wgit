@@ -1,4 +1,3 @@
-import 'package:expandable/expandable.dart';
 import 'package:flutter/material.dart';
 import 'package:wgit/services/firebase/firebase_service.dart';
 import 'package:wgit/services/types.dart';
@@ -79,37 +78,14 @@ class _HouseholdsWidgetState extends State<HouseholdsWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return ExpandablePanel(
-      theme: ExpandableThemeData(
-        iconColor: Colors.grey[400],
-        iconPlacement: ExpandablePanelIconPlacement.left,
-        iconRotationAngle: Util.degToRad(90),
-        collapseIcon: Icons.keyboard_arrow_right,
-        expandIcon: Icons.keyboard_arrow_right,
-      ),
-      header: SizedBox(
-        height: 40,
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              "HOUSEHOLDS",
-              style: AppTheme.drawerText,
-            ),
-          ],
-        ),
-      ),
-      collapsed: Container(),
-      expanded: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildHouseholds(),
-          const Divider(height: 4),
-          _buildItem(
-              icon: Icons.add, text: "Add New Household", onTap: _onNewTaped),
-        ],
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildHouseholds(),
+        const Divider(height: 4),
+        _buildItem(
+            icon: Icons.add, text: "Add New Household", onTap: _onNewTaped),
+      ],
     );
   }
 }
