@@ -25,6 +25,7 @@ class _DrawerCurrentHouseHoldActionsState
   bool working = false;
 
   void _leaveHouseholdTapped() async {
+    if(working) return;
     bool alone = houseHold.members.length == 1;
     bool isOnlyAdmin = houseHold.thisUserIsTheOnlyAdmin;
 
@@ -68,6 +69,16 @@ class _DrawerCurrentHouseHoldActionsState
       }
     }else{
       /// delete
+      var dialog = ConfirmDialog(
+                context: context,
+                title: "You are the only member. This will delete the household \"${houseHold.name}\"!",
+                confirm: "DELETE",
+              )..show();
+              bool confirm = await dialog.future;
+
+              if(confirm){
+                await FirebaseService.deleteHouseHold(houseHold);
+              }
       // return;
     }
 

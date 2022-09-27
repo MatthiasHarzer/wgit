@@ -18,13 +18,20 @@ class HouseHoldActivitiesView extends StatefulWidget {
 
 class _HouseHoldActivitiesViewState extends State<HouseHoldActivitiesView> {
   HouseHold get houseHold => widget.houseHold;
-  late Stream<List<Activity>> stream;
+  Stream<List<Activity>> get stream => houseHold.getActivityStream();
 
   @override
   void initState() {
     super.initState();
 
-    stream = houseHold.getActivityStream();
+    // stream = houseHold.getActivityStream();
+  }
+
+  @override
+  void didUpdateWidget(oldState){
+    super.didUpdateWidget(oldState);
+
+
   }
 
   @override

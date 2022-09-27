@@ -2,6 +2,7 @@
 
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:path_provider_android/path_provider_android.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_preferences_android/shared_preferences_android.dart';
@@ -15,7 +16,7 @@ class ConfigService {
   static late String _currentHouseholdId;
 
   static Future<void> ensureInitialized() async {
-    if (Platform.isAndroid) {
+    if (!kIsWeb && Platform.isAndroid) {
       SharedPreferencesAndroid.registerWith();
       PathProviderAndroid.registerWith();
     }

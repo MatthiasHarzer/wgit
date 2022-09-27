@@ -39,10 +39,7 @@ class Activity {
   double get total => contributions.values.fold(0, (p, c) => p + c);
 
   double getContributionOf(AppUser user) {
-    if (contributions.containsKey(user)) {
-      return contributions[user]!;
-    }
-    return 0;
+    return contributions[user] ?? 0;
   }
 
   Activity._({
@@ -312,7 +309,7 @@ class HouseHold {
     _onChange.add(cb);
   }
 
-  void _callOnChange() {
+  void callOnChange() {
     _onChange.forEach((cb) => cb());
   }
 
@@ -376,7 +373,7 @@ class HouseHold {
       activities =
           await Future.wait([for (var doc in docs) Activity.fromDoc(doc)]);
 
-      _callOnChange();
+      callOnChange();
       _updateStreams(
           controllers: _activitiesStreamControllers, withData: activities);
     });
@@ -400,7 +397,7 @@ class HouseHold {
         return;
       }
 
-      _callOnChange();
+      callOnChange();
       _updateStreams(controllers: _groupsStreamControllers, withData: groups);
     });
   }
@@ -414,7 +411,7 @@ class HouseHold {
         for (var doc in docs) doc.id: HouseHoldMemberData.fromDoc(doc)
       };
 
-      _callOnChange();
+      callOnChange();
     });
   }
 
@@ -454,7 +451,7 @@ class HouseHold {
           admins: admins.toList());
       _CACHE[id] = houseHold;
     }
-    houseHold._callOnChange();
+    houseHold.callOnChange();
     return houseHold;
   }
 

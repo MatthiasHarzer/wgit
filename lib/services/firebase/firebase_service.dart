@@ -80,16 +80,22 @@ class FirebaseService {
         .update({"admins": admins.map((a) => a.uid).toList()});
   }
 
-  // static Future deleteHouseHold(HouseHold houseHold){
-  //   var activities =RefService.refOfActivities(houseHoldId: houseHold.id);
-  //   var memberData = RefService.membersDataRefOf(houseHoldId: houseHold.id);
-  //   var groupData = RefService.groupsRefOf(houseHoldId: houseHold.id);
-  //
-  //   var batch = _firestore.batch():
-  //
-  //
-  //
-  // }
+  static Future deleteHouseHold(HouseHold houseHold)async{
+
+    var activities = await RefService.refOfActivities(houseHoldId: houseHold.id).get();
+    var memberData = await RefService.membersDataRefOf(houseHoldId: houseHold.id).get();
+    var groupData = await RefService.groupsRefOf(houseHoldId: houseHold.id).get();
+
+    var batch = _firestore.batch();
+
+    for(var doc in [...activities.docs, ...memberData.docs, ...groupData.docs]){
+      batch.delete(doc.reference);
+    }
+    await batch.commit();
+
+    var houseHoldRef = RefService.refOf(houseHoldId: houseHold.id);
+    await houseHoldRef.delete();
+  }
 
   static Future leaveHousehold(HouseHold houseHold){
     return removeMember(houseHold, houseHold.thisUser);

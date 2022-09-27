@@ -8,27 +8,41 @@ class _HouseHoldStandingsItem extends StatefulWidget {
   final Function(AppUser) onMoneySendTap;
   final AppUser member;
   final HouseHold houseHold;
-  const _HouseHoldStandingsItem({required this.member, required this.houseHold,required this.onMoneySendTap, Key? key}) : super(key: key);
+
+  const _HouseHoldStandingsItem(
+      {required this.member,
+      required this.houseHold,
+      required this.onMoneySendTap,
+      Key? key})
+      : super(key: key);
 
   @override
-  State<_HouseHoldStandingsItem> createState() => _HouseHoldStandingsItemState();
+  State<_HouseHoldStandingsItem> createState() =>
+      _HouseHoldStandingsItemState();
 }
 
 class _HouseHoldStandingsItemState extends State<_HouseHoldStandingsItem> {
   AppUser get member => widget.member;
   bool working = false;
 
-  void _onSendMoneyTaped(AppUser member)async{
+  void _onSendMoneyTaped(AppUser member) async {
     setState(() {
       working = true;
     });
 
     await widget.onMoneySendTap(member);
-    if(!mounted)return;
+    if (!mounted) return;
 
     setState(() {
       working = false;
     });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    widget.houseHold.onChange(() => setState(() {}));
   }
 
   /// Builds a colored text widget based on the value (value < 0 = red, >0 = grenn)
@@ -51,7 +65,8 @@ class _HouseHoldStandingsItemState extends State<_HouseHoldStandingsItem> {
 
   @override
   Widget build(BuildContext context) {
-    HouseHoldMemberData memberData = widget.houseHold.memberDataOf(member: member);
+    HouseHoldMemberData memberData =
+        widget.houseHold.memberDataOf(member: member);
 
     var totalPaid = memberData.totalPaid;
     var totalShouldPay = memberData.totalShouldPay;
@@ -82,17 +97,18 @@ class _HouseHoldStandingsItemState extends State<_HouseHoldStandingsItem> {
       trailing: IconButton(
         splashRadius: 25,
         tooltip: "Exchange Money",
-        icon: working ? const CircularProgressIndicator() : const Icon(Icons.payments),
+        icon: working
+            ? const CircularProgressIndicator()
+            : const Icon(Icons.payments),
         onPressed: member.isSelf || working
             ? null
             : () {
-          _onSendMoneyTaped(member);
-        },
+                _onSendMoneyTaped(member);
+              },
       ),
     );
   }
 }
-
 
 class HouseHoldStandings extends StatefulWidget {
   final HouseHold houseHold;
@@ -114,7 +130,11 @@ class _HouseHoldStandingsState extends State<HouseHoldStandings> {
     return Column(
       children: [
         for (var member in houseHold.members)
-          _HouseHoldStandingsItem(member: member, houseHold: houseHold, onMoneySendTap: widget.onMoneySendTap,),
+          _HouseHoldStandingsItem(
+            member: member,
+            houseHold: houseHold,
+            onMoneySendTap: widget.onMoneySendTap,
+          ),
       ],
     );
   }
