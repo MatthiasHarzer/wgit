@@ -46,6 +46,8 @@ dependencies:
   google_sign_in: ^5.4.2
   expandable: ^5.0.1
   intl: ^0.17.0
+  firebase_dynamic_links: ^4.3.8
+  qr_flutter: ^4.0.0
 
 dev_dependencies:
   flutter_test:

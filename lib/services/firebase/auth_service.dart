@@ -11,8 +11,28 @@ import '../types.dart';
 class AuthService {
   static Function(bool) _workingUpdate = (_) =>null;
 
+  static bool wasSignedIn = false;
+
   static void onWorkingUpdate(Function(bool) cb){
     _workingUpdate = cb;
+  }
+
+  static final List<VoidCallback> _onFirstSignInCallbacks = [];
+  static void onFirstSignIn(VoidCallback cb){
+    if(wasSignedIn) {
+      cb();
+    } else {
+      _onFirstSignInCallbacks.add(cb);
+    }
+  }
+
+  static Future ensureInitialized() async{
+    stateChange.listen((User? user) {
+      if(user != null && !wasSignedIn){
+        wasSignedIn = true;
+        _onFirstSignInCallbacks.forEach((cb)=>cb());
+      }
+    });
   }
 
   /// The current firebase user

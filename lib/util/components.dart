@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:expandable/expandable.dart';
 import 'package:flutter/material.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import 'package:wgit/util/util.dart';
 
 class ConfirmDialog {
@@ -193,28 +194,33 @@ class ExpandableListItem extends StatelessWidget {
       );
     }
 
+    Widget header = Text(
+      toUpperCase ? title.toUpperCase() : title,
+      style: TextStyle(
+        color: Colors.grey[400],
+        fontWeight: FontWeight.w500,
+        fontSize: 16,
+      ),
+      overflow: TextOverflow.ellipsis,
+      softWrap: true,
+    );
+
+    if (action != null) {
+      header = Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [header, action!],
+      );
+    }
+
     return ExpandablePanel(
       collapsed: initialExpanded ? content : Container(),
       theme: theme,
       header: SizedBox(
         height: 40,
         child: Align(
-          // alignment: Alignment.centerLeft,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-              toUpperCase ? title.toUpperCase() : title,
-                style: TextStyle(
-                  color: Colors.grey[400],
-                  fontWeight: FontWeight.w500,
-                  fontSize: 16,
-                ),
-              ),
-              if (action != null) action!
-            ],
-          ),
+          alignment: Alignment.centerLeft,
+          child: header,
         ),
       ),
       expanded: initialExpanded ? Container() : content,
@@ -257,6 +263,59 @@ class InfoActionWidget extends StatelessWidget {
         ),
       ],
     );
+  }
+}
+
+class AsyncQrImageLoader extends StatefulWidget {
+  final Future<String> Function() contentLoader;
+  final double qrCodeSize;
+  final double spinnerSize;
+
+  const AsyncQrImageLoader({
+    required this.contentLoader,
+    this.qrCodeSize = 220,
+    this.spinnerSize = 45,
+    Key? key,
+  }) : super(key: key);
+
+  @override
+  State<AsyncQrImageLoader> createState() => _AsyncQrImageLoaderState();
+}
+
+class _AsyncQrImageLoaderState extends State<AsyncQrImageLoader> {
+  String? _content;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _loadAsync();
+  }
+
+  void _loadAsync() async {
+    _content = await widget.contentLoader();
+    setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_content != null) {
+      return Container(
+        color: Colors.grey[200],
+        child: Padding(
+          padding: const EdgeInsets.all(1.0),
+          child: SizedBox.square(
+            dimension: widget.qrCodeSize,
+            child: QrImage(data: _content!),
+          ),
+        ),
+      );
+    } else {
+      return SizedBox.square(
+        dimension: widget.spinnerSize,
+        child: const CircularProgressIndicator(),
+      );
+    }
   }
 }
 

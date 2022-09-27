@@ -1,4 +1,5 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
 import 'package:flutter/material.dart';
 import 'package:wgit/services/config_service.dart';
 import 'package:wgit/services/firebase/auth_service.dart';
@@ -7,8 +8,9 @@ import 'package:wgit/services/types.dart';
 import 'package:wgit/util/components.dart';
 import 'package:wgit/util/util.dart';
 import 'package:wgit/views/add_or_create_household/base.dart';
-import 'package:wgit/views/household/household_view.dart';
+import 'package:wgit/views/add_user_to_household_view.dart';
 import 'package:wgit/views/edit_or_new_activity.dart';
+import 'package:wgit/views/household/household_view.dart';
 
 import 'drawer/drawer.dart';
 import 'firebase_options.dart';
@@ -21,12 +23,23 @@ void main() async {
   );
   await ConfigService.ensureInitialized();
   FirebaseService.ensureInitialized();
+  await AuthService.ensureInitialized();
 
-  runApp(const MyApp());
+  // String link = "https://wgit.page.link/GUDU";
+  // String link = "https://wgit.page.link/k29C";
+  // final PendingDynamicLinkData? initialLink =
+  //     await FirebaseDynamicLinks.instance.getDynamicLink(Uri.parse(link));
+
+  // Get any initial links
+  final PendingDynamicLinkData? initialLink = await FirebaseDynamicLinks.instance.getInitialLink();
+
+  runApp(MyApp(initialLink: initialLink));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final PendingDynamicLinkData? initialLink;
+
+  const MyApp({required this.initialLink, super.key});
 
   // This widget is the root of your application.
   @override
@@ -92,13 +105,17 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'WG IT',
       theme: theme,
-      home: const MainPage(),
+      home: MainPage(
+        initialLink: initialLink,
+      ),
     );
   }
 }
 
 class MainPage extends StatefulWidget {
-  const MainPage({super.key});
+  final PendingDynamicLinkData? initialLink;
+
+  const MainPage({required this.initialLink, super.key});
 
   @override
   State<MainPage> createState() => _MainPageState();
@@ -119,6 +136,12 @@ class _MainPageState extends State<MainPage> {
           }
         }));
 
+    AuthService.onFirstSignIn(() {
+      if (widget.initialLink != null) {
+        _handleDynLink(widget.initialLink!);
+      }
+    });
+
     FirebaseService.availableHouseholds.listen((households) {
       _availableHouseholds = households;
       if (_currentHousehold == null && households.isNotEmpty) {
@@ -133,13 +156,29 @@ class _MainPageState extends State<MainPage> {
         }
       } else if (households.isEmpty) {
         _currentHousehold = null;
+      }else if(!households.map((h)=>h.id).contains(_currentHousehold?.id)){
+        _currentHousehold = households.first;
       }
       setState(() {});
     });
   }
 
-  void open() {
-    // FirebaseService.createHousehold("Test Haus 222222222222");
+  void _openAddUserToHouseholdDialog(AppUser user) {
+    Navigator.push(
+      context,
+      Util.createScaffoldRoute(
+        view: AddUserToHouseholdView(
+          user: user,
+        ),
+      ),
+    );
+  }
+
+  void _handleDynLink(PendingDynamicLinkData dynLink) async {
+    AppUser? dynUser = await FirebaseService.resolveDynLinkUser(dynLink);
+    if (dynUser == null) return;
+    if(dynUser.uid == AuthService.appUser?.uid) return;
+    _openAddUserToHouseholdDialog(dynUser);
   }
 
   void _switchToHousehold(HouseHold household) {

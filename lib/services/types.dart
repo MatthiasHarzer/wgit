@@ -66,7 +66,7 @@ class Activity {
 
     Map<AppUser, double> contributions = {};
     for (var entry in contr.entries) {
-      var user = await RefService.resolveUid(entry.key);
+      var user = await AppUser.fromUid(entry.key);
       if (user == null) continue;
 
       contributions[user] = entry.value;
@@ -133,9 +133,9 @@ class Group {
     var data = doc.data() as Map<String, dynamic>;
 
     var name = data["name"];
-    var members = await RefService.resolveUids(data["members"].cast<String>());
+    var members = await AppUser.fromUids(data["members"].cast<String>());
 
-    members = members.where((m) => houseHold.members.contains(m));
+    members = members.where((m) => houseHold.members.contains(m)).toList();
 
     if (id == "all") {
       members = [...houseHold.members];
@@ -163,20 +163,34 @@ class AppUser {
   late final String uid;
   late final String displayName;
   late final String photoURL;
+  String? dynLink;
 
   bool get isSelf => uid == AuthService.appUser?.uid;
 
+  Future<String> getDynLink() async {
+    if (dynLink != null) return dynLink!;
+
+    return FirebaseService.createDynamicLinkFor(user: this);
+  }
+
   AppUser._(
-      {required this.uid, required this.displayName, required this.photoURL});
+      {required this.uid,
+      required this.displayName,
+      required this.photoURL,
+      this.dynLink});
 
   static AppUser _getCachedOrCreate(
       {required String uid,
       required String displayName,
-      required String photoURL}) {
+      required String photoURL,
+      String? dynLink}) {
     if (_CACHE.containsKey(uid)) return _CACHE[uid]!;
 
-    var user =
-        AppUser._(uid: uid, displayName: displayName, photoURL: photoURL);
+    var user = AppUser._(
+        uid: uid,
+        displayName: displayName,
+        photoURL: photoURL,
+        dynLink: dynLink);
     _CACHE[uid] = user;
     return user;
   }
@@ -193,12 +207,31 @@ class AppUser {
     var uid = data["uid"];
     var displayName = data["displayName"];
     var photoURL = data["photoURL"];
+    var dynLink = data["dynLink"];
     return _getCachedOrCreate(
-        uid: uid, displayName: displayName, photoURL: photoURL);
+        uid: uid,
+        displayName: displayName,
+        photoURL: photoURL,
+        dynLink: dynLink);
   }
 
   static AppUser fromDoc(DocumentSnapshot doc) {
     return fromJson(doc.data() as Map<String, dynamic>);
+  }
+
+  /// Returns the user with the given [uid]
+  static Future<AppUser?> fromUid(String uid) async {
+    if (_CACHE.containsKey(uid)) return _CACHE[uid]!;
+    var doc = await RefService.refOf(uid: uid).get();
+    if (!doc.exists) return null;
+    return fromDoc(doc);
+  }
+
+  /// Returns a list of users matching the [uids]
+  static Future<List<AppUser>> fromUids(Iterable<String> uids) async {
+    return (await Future.wait([for (var uid in uids) fromUid(uid)]))
+        .whereType<AppUser>()
+        .toList();
   }
 
   static AppUser? tryGetCached(String uid) {
@@ -213,7 +246,7 @@ class HouseHoldMemberData {
   late double totalShouldPay;
   late double totalPaid;
 
-  HouseHoldMemberData.emptyOf(AppUser user){
+  HouseHoldMemberData.emptyOf(AppUser user) {
     id = user.uid;
     totalPaid = 0;
     totalShouldPay = 0;
@@ -255,6 +288,8 @@ class HouseHold {
 
   // Iterable<String> get memberIds => members.map((m) => m.user.uid);
   AppUser get thisUser => AuthService.appUser!;
+
+  bool get thisUserIsAdmin => isUserAdmin(thisUser);
 
   final List<VoidCallback> _onChange = [];
   List<Activity> activities = [];
@@ -358,14 +393,16 @@ class HouseHold {
     });
   }
 
-  void _setupMemberDataStream(){
+  void _setupMemberDataStream() {
     RefService.membersDataRefOf(houseHoldId: id)
         .snapshots()
-        .listen((event) async{
-          var docs = event.docs;
-          memberData = {for(var doc in docs)doc.id:HouseHoldMemberData.fromDoc(doc)};
+        .listen((event) async {
+      var docs = event.docs;
+      memberData = {
+        for (var doc in docs) doc.id: HouseHoldMemberData.fromDoc(doc)
+      };
 
-          _callOnChange();
+      _callOnChange();
     });
   }
 
@@ -395,9 +432,8 @@ class HouseHold {
       var data = doc.data() as Map<String, dynamic>;
 
       var name = data["name"];
-      var members =
-          await RefService.resolveUids(data["members"].cast<String>());
-      var admins = await RefService.resolveUids(data["admins"].cast<String>());
+      var members = await AppUser.fromUids(data["members"].cast<String>());
+      var admins = await AppUser.fromUids(data["admins"].cast<String>());
 
       houseHold = HouseHold._(
           id: id,
@@ -417,10 +453,8 @@ class HouseHold {
     var data = doc.data() as Map<String, dynamic>;
 
     name = data["name"];
-    members =
-        (await RefService.resolveUids(data["members"].cast<String>())).toList();
-    admins =
-        (await RefService.resolveUids(data["admins"].cast<String>())).toList();
+    members = await AppUser.fromUids(data["members"].cast<String>());
+    admins = await AppUser.fromUids(data["admins"].cast<String>());
     return this;
   }
 
@@ -436,11 +470,14 @@ class HouseHold {
 
   /// Returns the member data of this household
   HouseHoldMemberData memberDataOf({required AppUser member}) {
-    if(memberData.keys.contains(member.uid)) return memberData[member.uid]!;
+    if (memberData.keys.contains(member.uid)) return memberData[member.uid]!;
     return HouseHoldMemberData.emptyOf(member);
   }
 
-  Future exchangeMoney({required AppUser from, required AppUser to, required double amount})async{
+  Future exchangeMoney(
+      {required AppUser from,
+      required AppUser to,
+      required double amount}) async {
     var fromMemberData = memberDataOf(member: from);
     var toMemberData = memberDataOf(member: to);
 
@@ -448,8 +485,10 @@ class HouseHold {
     toMemberData.totalPaid -= amount;
 
     await Future.wait([
-      FirebaseService.updateMemberData(houseHold: this, memberData: fromMemberData),
-      FirebaseService.updateMemberData(houseHold: this, memberData: toMemberData)
+      FirebaseService.updateMemberData(
+          houseHold: this, memberData: fromMemberData),
+      FirebaseService.updateMemberData(
+          houseHold: this, memberData: toMemberData)
     ]);
   }
 

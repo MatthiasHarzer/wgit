@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
+import 'package:wgit/util/consts.dart';
 
 import '../types.dart';
 import 'auth_service.dart';
@@ -10,6 +12,7 @@ import 'firebase_ref_service.dart';
 /// Dart interface to communicate with the firebase platform
 class FirebaseService {
   static FirebaseFirestore get _firestore => FirebaseFirestore.instance;
+  static FirebaseDynamicLinks get _dynLinks => FirebaseDynamicLinks.instance;
   static bool _initialized = false;
 
   static AppUser? get user => AuthService.appUser;
@@ -19,7 +22,6 @@ class FirebaseService {
   /// Returns a list of all households the current user is a member of
   static Future<List<HouseHold>> getAvailableHouseHolds() async {
     if (!signedIn) return [];
-
     var snapshot = await RefService.householdsRef
         .where("members", arrayContains: user!.uid)
         .get();
@@ -51,6 +53,20 @@ class FirebaseService {
       }
     });
     return controller.stream;
+  }
+
+  /// Adds the given [user] to the given [houseHold], if the current user is an admin in the household
+  static Future addMember(HouseHold houseHold, AppUser user) async{
+    if(!houseHold.thisUserIsAdmin) return;
+
+    var currentMembers = houseHold.members.map((m)=>m.uid).toList();
+
+    if(currentMembers.contains(user.uid)) return;
+
+    currentMembers.add(user.uid);
+
+    await RefService.refOf(houseHoldId: houseHold.id)
+        .update({"members": currentMembers});
   }
 
   /// Promotes the given [member] int the given [houseHold]
@@ -192,9 +208,37 @@ class FirebaseService {
       "name": name,
       "members": members.map((m) => m.uid).toList(),
     });
+
+  }
+  static Future<String> createDynamicLinkFor({required AppUser user}) async {
+    final targetUrl = "$DYNLINK_REDIRECT_URI/?user=${user.uid}";
+    final params = DynamicLinkParameters(
+        link: Uri.parse(targetUrl),
+        uriPrefix: DYNLINK_URI_PREFIX,
+      androidParameters: const AndroidParameters(
+        packageName: "dev.taptwice.wgit"
+      )
+    );
+
+    final dynLink = await _dynLinks.buildShortLink(params);
+
+    return dynLink.shortUrl.toString();
+
+    // print("dynLink $dynLink");
+    // print(dynLink.shortUrl);
   }
 
+  static Future<AppUser?> resolveDynLinkUser(PendingDynamicLinkData dynLink)async{
+    Uri uri = dynLink.link;
+    String? uid = uri.queryParameters["user"];
 
+    if(uid == null) return null;
+    
+    AppUser? user = await AppUser.fromUid(uid);
+    if(user == null) return null;
+
+    return user;
+  }
 
   /// Initializes firebase, if not done already
   static void ensureInitialized() {

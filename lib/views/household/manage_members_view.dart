@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:wgit/services/firebase/firebase_service.dart';
 import 'package:wgit/services/types.dart';
-import 'package:wgit/theme.dart';
 
 import '../../util/components.dart';
 
@@ -47,7 +46,7 @@ class _ManageMembersViewState extends State<ManageMembersView> {
   void _removeMemberTaped(AppUser member) async {
     var dialog = ConfirmDialog(
         context: context,
-        title: "Remove ${member.displayName} to admin?",
+        title: "Remove ${member.displayName} from ${houseHold.name}?",
         confirm: "REMOVE")
       ..show();
 
@@ -60,10 +59,13 @@ class _ManageMembersViewState extends State<ManageMembersView> {
 
   /// Build a member item to promote / remove users in household
   Widget _buildMemberItem(AppUser member) {
-    bool amIAdmin = houseHold.isUserAdmin(houseHold.thisUser);
+    bool amIAdmin = houseHold.thisUserIsAdmin;
     // print("Is user admin");
-    bool isPromotable = !houseHold.isUserAdmin(member) && amIAdmin;
-    bool isRemovable = member.uid != houseHold.thisUser.uid && amIAdmin;
+    bool isMe = member.uid == houseHold.thisUser.uid;
+    bool isAdmin = houseHold.isUserAdmin(member);
+    bool isPromotable = isAdmin && amIAdmin;
+    bool isRemovable = amIAdmin && isMe;
+    // bool isDemotable = amIAdmin && !isMe && isAdmin;
     // isPromotable = true;
     return ListTile(
       leading: buildCircularAvatar(url: member.photoURL, dimension: 40),
@@ -74,7 +76,6 @@ class _ManageMembersViewState extends State<ManageMembersView> {
         children: [
           TextButton(
             onPressed: isPromotable ? () => _promoteMemberTaped(member) : null,
-
             child: const Text("PROMOTE"),
           ),
           IconButton(

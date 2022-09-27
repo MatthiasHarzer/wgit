@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import '../types.dart';
 import 'firebase_service.dart';
 
 /// Responsible for providing references in the cloud firestore
@@ -60,20 +59,20 @@ class RefService {
 
 
   /// Gets users information by its user id
-  static Future<AppUser?> resolveUid(String uid) async {
-    var cached = AppUser.tryGetCached(uid);
-    if (cached != null) return cached;
+  // static Future<AppUser?> resolveUid(String uid) async {
+  //   var cached = AppUser.tryGetCached(uid);
+  //   if (cached != null) return cached;
+  //
+  //   var doc = await usersRef.doc(uid).get();
+  //   if (!doc.exists) return null;
+  //
+  //   return AppUser.fromDoc(doc);
+  // }
 
-    var doc = await usersRef.doc(uid).get();
-    if (!doc.exists) return null;
-
-    return AppUser.fromDoc(doc);
-  }
-
-  /// Like [resolveUid] but for arrays
-  static Future<Iterable<AppUser>> resolveUids(Iterable<String> uids) async {
-    var futures = uids.map((uid) => resolveUid(uid));
-
-    return (await Future.wait(futures)).whereType<AppUser>();
-  }
+  // /// Like [resolveUid] but for arrays
+  // static Future<Iterable<AppUser>> resolveUids(Iterable<String> uids) async {
+  //   var futures = uids.map((uid) => resolveUid(uid));
+  //
+  //   return (await Future.wait(futures)).whereType<AppUser>();
+  // }
 }
