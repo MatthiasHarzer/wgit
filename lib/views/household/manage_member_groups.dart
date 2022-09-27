@@ -3,7 +3,6 @@ import 'package:wgit/services/firebase/firebase_service.dart';
 import 'package:wgit/util/components.dart';
 
 import '../../services/types.dart';
-import '../../theme.dart';
 
 class _CreateOrEditGroupDialog extends StatefulWidget {
   final bool isEdit;
@@ -192,8 +191,6 @@ class _ManageMemberGroupsViewState extends State<ManageMemberGroupsView> {
     super.initState();
 
     houseHold.onChange(() {
-      print("HOUSEHOLD UPDATE");
-      print(houseHold.groups);
       if (mounted) {
         setState(() {});
       }

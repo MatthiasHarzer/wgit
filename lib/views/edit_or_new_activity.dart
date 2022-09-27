@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:wgit/services/firebase/firebase_service.dart';
 
@@ -21,13 +22,15 @@ class _EditOrNewActivityState extends State<EditOrNewActivity> {
   HouseHold get houseHold => widget.houseHold;
 
   List<AppUser> get availableUsers => <AppUser>{
-        ...widget.houseHold.members,
+        ...selectedGroup.members,
         ...tempActivity.contributions.keys
       }.toList();
 
   double get total => _contributions.values.fold(0, (p, c) => p + c);
 
-  late Activity tempActivity = Activity.empty();
+  late Group selectedGroup;
+
+  late Activity tempActivity;
   bool isEditMode = false;
 
   bool working = false;
@@ -38,18 +41,30 @@ class _EditOrNewActivityState extends State<EditOrNewActivity> {
   void initState() {
     super.initState();
 
-    // print("EXISTING:");
-    // print(widget.existingActivity);
+
+
+    tempActivity = Activity.empty();
+
+    houseHold.onChange(() {
+      if (mounted) {
+        setState(() {});
+      }
+    });
 
     if (widget.existingActivity != null) {
       isEditMode = true;
       tempActivity = widget.existingActivity!.copy();
 
-      for (var entry in tempActivity.contributions.entries) {
-        print("${entry.key} : ${entry.value}");
-      }
+      // for (var entry in tempActivity.contributions.entries) {
+      //   print("${entry.key} : ${entry.value}");
+      // }
     } else {
-      tempActivity.contributions = {for (var user in availableUsers) user: 0};
+
+    }
+    selectedGroup = houseHold.defaultGroup!;
+    // print(tempActivity.groupId);
+    if(tempActivity.groupId != null){
+      selectedGroup = houseHold.findGroup(tempActivity.groupId) ?? selectedGroup;
     }
   }
 
@@ -60,11 +75,18 @@ class _EditOrNewActivityState extends State<EditOrNewActivity> {
 
   void _submit() async {
     if (working) return;
-    tempActivity.label =
-        tempActivity.label.isEmpty ? "(Unnamed)" : tempActivity.label;
     setState(() {
       working = true;
     });
+    tempActivity.label =
+        tempActivity.label.isEmpty ? "(Unnamed)" : tempActivity.label;
+    tempActivity.groupId = selectedGroup.id;
+
+    for(var user in availableUsers){
+      if(!tempActivity.contributions.containsKey(user)){
+        tempActivity.contributions[user] = 0;
+      }
+    }
 
     await FirebaseService.submitActivity(
         houseHold: houseHold, activity: tempActivity);
@@ -87,6 +109,48 @@ class _EditOrNewActivityState extends State<EditOrNewActivity> {
   double _getUserContribution(AppUser user) {
     if (_contributions.containsKey(user)) return _contributions[user]!;
     return 0;
+  }
+
+  /// Builds a dropdown select menu option
+  Widget _buildGroupsSelect(
+      {required Group? value,
+      required Function(Group) onChanged,
+      required List<Group> options,
+      String? placeHolder}) {
+    List<DropdownMenuItem<String>> dropDownItems = options
+        .map((group) => DropdownMenuItem<String>(
+              value: group.id,
+              child: Text(group.name),
+            ))
+        .toList();
+
+    final GlobalKey dropDownKey = GlobalKey();
+
+    String? valueId = value?.id;
+
+    if (!options.map((h) => h.id).contains(value?.id)) {
+      valueId = null;
+    }
+    return DropdownButton(
+      style: TextStyle(
+        color: Theme.of(context).colorScheme.secondary,
+        fontWeight: FontWeight.w500
+      ),
+      key: dropDownKey,
+      value: valueId,
+      items: dropDownItems,
+      hint: placeHolder != null ? Text(placeHolder) : null,
+      onChanged: (String? newValue) {
+        if (newValue == null) {
+          return;
+        }
+        Group? group =
+            houseHold.groups.firstWhereOrNull((g) => g.id == newValue);
+        if (group != null) {
+          onChanged(group);
+        }
+      },
+    );
   }
 
   /// Builds formfield to enter the users contributoins
@@ -207,6 +271,25 @@ class _EditOrNewActivityState extends State<EditOrNewActivity> {
                   border: UnderlineInputBorder(),
                   labelText: "Label or reason",
                 ),
+              ),
+              Row(
+                children: [
+                  const Spacer(),
+                  Text(
+                    "GROUP:",
+                    style: TextStyle(
+                        color: Colors.grey[400], fontWeight: FontWeight.w500),
+                  ),
+                  const Spacer(),
+                  _buildGroupsSelect(
+                      value: selectedGroup,
+                      options: houseHold.groups,
+                      onChanged: (g) => setState(() {
+                            selectedGroup = g;
+                          }),
+                      placeHolder: "GORUP"),
+                  const Spacer(),
+                ],
               ),
               _buildUsersContributionInputFields(),
               Padding(

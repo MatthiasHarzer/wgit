@@ -36,6 +36,7 @@ class Activity {
   String label;
   DateTime? date;
   Map<AppUser, double> contributions;
+  String? groupId;
 
   double get total => contributions.values.fold(0, (p, c) => p + c);
 
@@ -48,6 +49,7 @@ class Activity {
     required this.contributions,
     this.date,
     this.id,
+    this.groupId
   });
 
   /// Creates an activity from a document snapshot
@@ -58,6 +60,8 @@ class Activity {
 
     var label = data["label"];
     var date = data["timestamp"]?.toDate() ?? DateTime.now();
+
+    var group = data["groupId"] ?? "all";
 
     var raw = data["contributions"] as Map<String, dynamic>;
     Map<String, double> contr = raw.cast<String, double>();
@@ -71,7 +75,7 @@ class Activity {
     }
 
     return Activity._(
-        id: id, label: label, contributions: contributions, date: date);
+        id: id, label: label, contributions: contributions, date: date, groupId: group);
   }
 
   Activity.empty() : this._(contributions: {}, label: "");
@@ -88,8 +92,18 @@ class Activity {
       "label": label,
       "contributions":
           contributions.map((key, value) => MapEntry(key.uid, value)),
-      "total": total
+      "total": total,
+      "groupId": groupId,
     };
+  }
+  Activity copy() {
+    return Activity._(
+      id: id,
+      contributions: Map.of(contributions),
+      label: label,
+      date: date,
+      groupId: groupId
+    );
   }
 
   @override
@@ -97,14 +111,7 @@ class Activity {
     return "Action<$label @$id on $date with $contributions>";
   }
 
-  Activity copy() {
-    return Activity._(
-      id: id,
-      contributions: Map.of(contributions),
-      label: label,
-      date: date,
-    );
-  }
+
 }
 
 /// A group consists of a subset of [AppUsers] from one [HouseHold] members, sharing financials
@@ -515,6 +522,10 @@ class HouseHold {
   HouseHoldMemberData memberDataOf({required AppUser member}) {
     if (memberData.keys.contains(member.uid)) return memberData[member.uid]!;
     return HouseHoldMemberData.emptyOf(member);
+  }
+
+  Group? findGroup(String? groupId){
+    return groups.firstWhereOrNull((g) => g.id == groupId);
   }
 
   Future exchangeMoney(
