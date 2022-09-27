@@ -282,6 +282,8 @@ class HouseHold {
   late List<AppUser> members;
   late List<AppUser> admins;
 
+  List<AppUser> get validAdmins => members.where((m) => admins.contains(m)).toList();
+
   final List<StreamController<List<Activity>>> _activitiesStreamControllers =
       [];
   final List<StreamController<List<Group>>> _groupsStreamControllers = [];
@@ -290,6 +292,16 @@ class HouseHold {
   AppUser get thisUser => AuthService.appUser!;
 
   bool get thisUserIsAdmin => isUserAdmin(thisUser);
+
+  bool get thisUserIsTheOnlyAdmin => thisUserIsAdmin && validAdmins.length == 1;
+
+  /// Returns whether the current user can leave the house hold or not.
+  /// e.x. the user can't leave if it's the only admin in the household
+  // bool canLeaveHousehold(){
+  //   if(thisUserIsAdmin && validAdmins.length == 1){
+  //     /// The user is the only admin
+  //   }
+  // }
 
   final List<VoidCallback> _onChange = [];
   List<Activity> activities = [];

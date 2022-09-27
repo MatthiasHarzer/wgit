@@ -80,6 +80,21 @@ class FirebaseService {
         .update({"admins": admins.map((a) => a.uid).toList()});
   }
 
+  // static Future deleteHouseHold(HouseHold houseHold){
+  //   var activities =RefService.refOfActivities(houseHoldId: houseHold.id);
+  //   var memberData = RefService.membersDataRefOf(houseHoldId: houseHold.id);
+  //   var groupData = RefService.groupsRefOf(houseHoldId: houseHold.id);
+  //
+  //   var batch = _firestore.batch():
+  //
+  //
+  //
+  // }
+
+  static Future leaveHousehold(HouseHold houseHold){
+    return removeMember(houseHold, houseHold.thisUser);
+  }
+
   /// Removes the given [member] from the given [houseHold]
   static Future removeMember(HouseHold houseHold, AppUser member) async {
     if (!houseHold.members.contains(member)) return;

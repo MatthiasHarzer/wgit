@@ -39,7 +39,7 @@ class _AddUserToHouseholdViewState extends State<AddUserToHouseholdView> {
   }
 
   void _add() async {
-    if (selectedHousehold == null) return;
+    if (selectedHousehold == null || working) return;
     setState(() {
       working = true;
     });

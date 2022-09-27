@@ -31,7 +31,8 @@ void main() async {
   //     await FirebaseDynamicLinks.instance.getDynamicLink(Uri.parse(link));
 
   // Get any initial links
-  final PendingDynamicLinkData? initialLink = await FirebaseDynamicLinks.instance.getInitialLink();
+  final PendingDynamicLinkData? initialLink =
+      await FirebaseDynamicLinks.instance.getInitialLink();
 
   runApp(MyApp(initialLink: initialLink));
 }
@@ -156,7 +157,7 @@ class _MainPageState extends State<MainPage> {
         }
       } else if (households.isEmpty) {
         _currentHousehold = null;
-      }else if(!households.map((h)=>h.id).contains(_currentHousehold?.id)){
+      } else if (!households.map((h) => h.id).contains(_currentHousehold?.id)) {
         _currentHousehold = households.first;
       }
       setState(() {});
@@ -177,7 +178,7 @@ class _MainPageState extends State<MainPage> {
   void _handleDynLink(PendingDynamicLinkData dynLink) async {
     AppUser? dynUser = await FirebaseService.resolveDynLinkUser(dynLink);
     if (dynUser == null) return;
-    if(dynUser.uid == AuthService.appUser?.uid) return;
+    if (dynUser.uid == AuthService.appUser?.uid) return;
     _openAddUserToHouseholdDialog(dynUser);
   }
 
@@ -219,30 +220,26 @@ class _MainPageState extends State<MainPage> {
 
   /// Builds the widget if the user is not in any household
   Widget _buildNoHouseholdView() {
-    if (!AuthService.signedIn) {
-      return Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          const Padding(
-            padding: EdgeInsets.all(8.0),
-            child: Text(
-              "You need to be signed in to view your households.",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
-              textAlign: TextAlign.center,
-            ),
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        const Padding(
+          padding: EdgeInsets.all(8.0),
+          child: Text(
+            "You need to be signed in to view your households.",
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
+            textAlign: TextAlign.center,
           ),
-          MaterialButton(
-            onPressed: _signInTaped,
-            child: Text(
-              "SIGN IN",
-              style: AppTheme.materialButtonLabelStyle,
-            ),
-          )
-        ],
-      );
-    }
-    return Text("");
+        ),
+        TextButton(
+          onPressed: _signInTaped,
+          child: const Text(
+            "SIGN IN",
+          ),
+        )
+      ],
+    );
   }
 
   /// Builds the currently selected household or returns an info screen
