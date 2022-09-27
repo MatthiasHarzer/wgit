@@ -91,6 +91,11 @@ class Activity {
     };
   }
 
+  @override
+  String toString(){
+    return "Action<$label @$id on $date with $contributions>";
+  }
+
   Activity copy() {
     return Activity._(
       id: id,
@@ -234,6 +239,11 @@ class AppUser {
   static AppUser? tryGetCached(String uid) {
     if (_CACHE.containsKey(uid)) return _CACHE[uid];
     return null;
+  }
+
+  @override
+  String toString(){
+    return "AppUser<$displayName @$uid>";
   }
 }
 

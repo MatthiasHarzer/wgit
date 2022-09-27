@@ -1,9 +1,6 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:wgit/services/firebase/firebase_service.dart';
 
-import '../services/firebase/firebase_ref_service.dart';
 import '../services/types.dart';
 import '../util/components.dart';
 import '../util/util.dart';
@@ -12,7 +9,9 @@ class EditOrNewActivity extends StatefulWidget {
   final HouseHold houseHold;
   final Activity? existingActivity;
 
-  const EditOrNewActivity({required this.houseHold, this.existingActivity, Key? key}) : super(key: key);
+  const EditOrNewActivity(
+      {required this.houseHold, this.existingActivity, Key? key})
+      : super(key: key);
 
   @override
   State<EditOrNewActivity> createState() => _EditOrNewActivityState();
@@ -20,7 +19,11 @@ class EditOrNewActivity extends StatefulWidget {
 
 class _EditOrNewActivityState extends State<EditOrNewActivity> {
   HouseHold get houseHold => widget.houseHold;
-  List<AppUser> get availableUsers => widget.houseHold.members;
+
+  List<AppUser> get availableUsers => <AppUser>{
+        ...widget.houseHold.members,
+        ...tempActivity.contributions.keys
+      }.toList();
 
   double get total => _contributions.values.fold(0, (p, c) => p + c);
 
@@ -32,41 +35,47 @@ class _EditOrNewActivityState extends State<EditOrNewActivity> {
   Map<AppUser, double> get _contributions => tempActivity.contributions;
 
   @override
-  void initState(){
+  void initState() {
     super.initState();
 
-    if(widget.existingActivity != null){
+    // print("EXISTING:");
+    // print(widget.existingActivity);
+
+    if (widget.existingActivity != null) {
       isEditMode = true;
       tempActivity = widget.existingActivity!.copy();
-    }else{
-      tempActivity.contributions = {for(var user in availableUsers) user: 0};
+
+      for (var entry in tempActivity.contributions.entries) {
+        print("${entry.key} : ${entry.value}");
+      }
+    } else {
+      tempActivity.contributions = {for (var user in availableUsers) user: 0};
     }
   }
 
-
-
-  void _close(){
+  void _close() {
     FocusManager.instance.primaryFocus?.unfocus();
     Navigator.pop(context);
   }
 
-  void _submit()async{
-    if(working) return;
-    tempActivity.label = tempActivity.label.isEmpty ? "(Unnamed)" : tempActivity.label;
+  void _submit() async {
+    if (working) return;
+    tempActivity.label =
+        tempActivity.label.isEmpty ? "(Unnamed)" : tempActivity.label;
     setState(() {
       working = true;
     });
 
-    await FirebaseService.submitActivity(houseHold: houseHold, activity: tempActivity);
+    await FirebaseService.submitActivity(
+        houseHold: houseHold, activity: tempActivity);
 
-    if(mounted){
+    if (mounted) {
       setState(() {
         working = false;
       });
 
       _close();
     }
-
   }
 
   void _setUserContribution(AppUser user, double contribution) {
@@ -86,9 +95,9 @@ class _EditOrNewActivityState extends State<EditOrNewActivity> {
       double contribution = _getUserContribution(user);
       double perc = contribution * 100 / total;
       String percent;
-      if(total == 0){
+      if (total == 0) {
         percent = "";
-      }else{
+      } else {
         percent = "${perc.round()}%";
       }
 
@@ -108,7 +117,7 @@ class _EditOrNewActivityState extends State<EditOrNewActivity> {
             },
             child: TextFormField(
               initialValue: contribution == 0 ? null : contribution.toString(),
-              onChanged: (c){
+              onChanged: (c) {
                 contribution = double.tryParse(c) ?? 0;
                 _setUserContribution(user, contribution);
               },
@@ -132,7 +141,8 @@ class _EditOrNewActivityState extends State<EditOrNewActivity> {
 
   /// Builds the total display widget
   Widget _buildTotal() {
-    TextStyle style = TextStyle(fontSize: 20, fontWeight: FontWeight.w500, color: Colors.grey[400]);
+    TextStyle style = TextStyle(
+        fontSize: 20, fontWeight: FontWeight.w500, color: Colors.grey[400]);
     String text = "Total: €${Util.formatAmount(total)}";
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -143,38 +153,36 @@ class _EditOrNewActivityState extends State<EditOrNewActivity> {
   }
 
   /// Builds submit / cancel actions
-  Widget _buildActions(){
+  Widget _buildActions() {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
         TextButton(
-            onPressed: _close,
-            child: const Text("DISCARD"),
+          onPressed: _close,
+          child: const Text("DISCARD"),
         ),
         ElevatedButton(
-            onPressed: _submit,
-            child: Row(
-              children: [
-                Visibility(
-                  visible: working,
-                  child: Padding(
-                    padding: const EdgeInsets.only(right: 8.0),
-                    child: SizedBox.square(
-                      dimension: 15,
-                      child: CircularProgressIndicator(
-                        color: Colors.grey[200],
-                        strokeWidth: 3,
-                      ),
+          onPressed: _submit,
+          child: Row(
+            children: [
+              Visibility(
+                visible: working,
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: SizedBox.square(
+                    dimension: 15,
+                    child: CircularProgressIndicator(
+                      color: Colors.grey[200],
+                      strokeWidth: 3,
                     ),
                   ),
                 ),
-                const Text("SUBMIT")
-              ],
-            ),
-
+              ),
+              const Text("SUBMIT")
+            ],
+          ),
         ),
-
       ],
     );
   }
@@ -189,7 +197,6 @@ class _EditOrNewActivityState extends State<EditOrNewActivity> {
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8.0),
         child: SingleChildScrollView(
-
           child: Column(
             children: [
               TextFormField(
