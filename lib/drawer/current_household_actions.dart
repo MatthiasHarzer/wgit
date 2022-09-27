@@ -4,7 +4,9 @@ import '../services/types.dart';
 
 class DrawerCurrentHouseHoldActions extends StatefulWidget {
   final HouseHold houseHold;
-  const DrawerCurrentHouseHoldActions({ required this.houseHold,Key? key}) : super(key: key);
+  final VoidCallback onAddActivityTapped;
+
+  const DrawerCurrentHouseHoldActions({ required this.houseHold, required this.onAddActivityTapped, Key? key}) : super(key: key);
 
   @override
   State<DrawerCurrentHouseHoldActions> createState() => _DrawerCurrentHouseHoldActionsState();

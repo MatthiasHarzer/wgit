@@ -62,64 +62,11 @@ class _HouseHoldViewState extends State<HouseHoldView> {
     );
   }
 
-  Widget _buildItem({required String title,
-    required Widget content,
-    Widget? action,
-    bool initialExpanded = false}) {
-    ExpandableThemeData theme;
-
-    /// Not ideal but with a custom expandable controller the icon wouldn't be reactive, so /shrug
-    if (initialExpanded) {
-      theme = ExpandableThemeData(
-        iconColor: Colors.grey[300],
-        iconPlacement: ExpandablePanelIconPlacement.left,
-        iconRotationAngle: Util.degToRad(-90),
-        collapseIcon: Icons.keyboard_arrow_down,
-        expandIcon: Icons.keyboard_arrow_down,
-      );
-    } else {
-      theme = ExpandableThemeData(
-        iconColor: Colors.grey[300],
-        iconPlacement: ExpandablePanelIconPlacement.left,
-        iconRotationAngle: Util.degToRad(90),
-        collapseIcon: Icons.keyboard_arrow_right,
-        expandIcon: Icons.keyboard_arrow_right,
-      );
-    }
-
-    return ExpandablePanel(
-      collapsed: initialExpanded ? content : Container(),
-      theme: theme,
-      header: SizedBox(
-        height: 40,
-        child: Align(
-          // alignment: Alignment.centerLeft,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                title,
-                style: TextStyle(
-                  color: Colors.grey[400],
-                  fontWeight: FontWeight.w500,
-                  fontSize: 16,
-                ),
-              ),
-              if (action != null) action
-            ],
-          ),
-        ),
-      ),
-      expanded: initialExpanded ? Container() : content,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return ListView(
       children: [
-        _buildItem(
+        ExpandableListItem(
           title: "MEMBERS",
           content: HouseHoldMembersSnippet(
             houseHold: houseHold,
@@ -134,15 +81,7 @@ class _HouseHoldViewState extends State<HouseHoldView> {
               : null,
         ),
         const Divider(),
-        _buildItem(
-          title: "ACTIVITIES",
-          content: HouseHoldActivitiesView(
-            houseHold: houseHold,
-          ),
-          initialExpanded: true,
-        ),
-        const Divider(),
-        _buildItem(
+        ExpandableListItem(
           title: "STANDINGS",
           content: HouseHoldStandings(
             houseHold: houseHold,
@@ -150,6 +89,15 @@ class _HouseHoldViewState extends State<HouseHoldView> {
           ),
           initialExpanded: true,
         ),
+        const Divider(),
+        ExpandableListItem(
+          title: "ACTIVITIES",
+          content: HouseHoldActivitiesView(
+            houseHold: houseHold,
+          ),
+          initialExpanded: true,
+        ),
+
         const SizedBox(
           height: 60,
         )

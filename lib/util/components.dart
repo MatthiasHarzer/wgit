@@ -1,6 +1,8 @@
 import 'dart:async';
 
+import 'package:expandable/expandable.dart';
 import 'package:flutter/material.dart';
+import 'package:wgit/util/util.dart';
 
 class ConfirmDialog {
   final BuildContext context;
@@ -93,7 +95,7 @@ class UserInputDialog {
       this.submit = "SUBMIT",
       this.onCancel,
       this.onSubmit,
-        this.inputType = TextInputType.text,
+      this.inputType = TextInputType.text,
       Key? key});
 
   void _onSubmit() {
@@ -148,6 +150,75 @@ class UserInputDialog {
 
   void show() {
     showDialog(context: context, builder: (ctx) => widget);
+  }
+}
+
+/// An expandable list item with a title and an optional action
+class ExpandableListItem extends StatelessWidget {
+  final String title;
+  final Widget content;
+  final Widget? action;
+  final bool initialExpanded;
+  final bool toUpperCase;
+
+  const ExpandableListItem({
+    required this.title,
+    required this.content,
+    this.action,
+    this.initialExpanded = false,
+    this.toUpperCase = true,
+    Key? key,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    ExpandableThemeData theme;
+
+    /// Not ideal but with a custom expandable controller the icon wouldn't be reactive, so /shrug
+    if (initialExpanded) {
+      theme = ExpandableThemeData(
+        iconColor: Colors.grey[300],
+        iconPlacement: ExpandablePanelIconPlacement.left,
+        iconRotationAngle: Util.degToRad(-90),
+        collapseIcon: Icons.keyboard_arrow_down,
+        expandIcon: Icons.keyboard_arrow_down,
+      );
+    } else {
+      theme = ExpandableThemeData(
+        iconColor: Colors.grey[300],
+        iconPlacement: ExpandablePanelIconPlacement.left,
+        iconRotationAngle: Util.degToRad(90),
+        collapseIcon: Icons.keyboard_arrow_right,
+        expandIcon: Icons.keyboard_arrow_right,
+      );
+    }
+
+    return ExpandablePanel(
+      collapsed: initialExpanded ? content : Container(),
+      theme: theme,
+      header: SizedBox(
+        height: 40,
+        child: Align(
+          // alignment: Alignment.centerLeft,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+              toUpperCase ? title.toUpperCase() : title,
+                style: TextStyle(
+                  color: Colors.grey[400],
+                  fontWeight: FontWeight.w500,
+                  fontSize: 16,
+                ),
+              ),
+              if (action != null) action!
+            ],
+          ),
+        ),
+      ),
+      expanded: initialExpanded ? Container() : content,
+    );
   }
 }
 
