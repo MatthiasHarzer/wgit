@@ -1,13 +1,19 @@
+import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
 import 'package:flutter/material.dart';
 import 'package:wgit/services/firebase/firebase_service.dart';
 import 'package:wgit/services/types.dart';
+import 'package:wgit/views/qr_code_scan_view.dart';
 
+import '../../services/firebase/auth_service.dart';
 import '../../util/components.dart';
+import '../../util/util.dart';
+import '../add_user_to_household_view.dart';
 
 class ManageMembersView extends StatefulWidget {
   final HouseHold houseHold;
 
-  const ManageMembersView({required this.houseHold, Key? key}) : super(key: key);
+  const ManageMembersView({required this.houseHold, Key? key})
+      : super(key: key);
 
   @override
   State<ManageMembersView> createState() => _ManageMembersViewState();
@@ -17,14 +23,51 @@ class _ManageMembersViewState extends State<ManageMembersView> {
   HouseHold get houseHold => widget.houseHold;
 
   @override
-  void initState(){
+  void initState() {
     super.initState();
 
     houseHold.onChange(() => {
-      if(mounted){
-        setState(() {})
-      }
-    });
+          if (mounted) {setState(() {})}
+        });
+  }
+
+  void _openAddUserToHouseholdDialog(AppUser user) {
+    Navigator.push(
+      context,
+      Util.createScaffoldRoute(
+        view: AddUserToHouseholdView(
+          user: user,
+        ),
+      ),
+    );
+  }
+
+  void _resolveScannedUri(String uri)async{
+
+    Future<bool> resolve(String uri) async{
+      final PendingDynamicLinkData? dynLink =
+      await FirebaseDynamicLinks.instance.getDynamicLink(Uri.parse(uri));
+      if(dynLink == null) return false;
+      AppUser? dynUser = await FirebaseService.resolveDynLinkUser(dynLink);
+      if (dynUser == null) return false;
+      if(dynUser.uid == AuthService.appUser?.uid) return false;
+      _openAddUserToHouseholdDialog(dynUser);
+      return true;
+    }
+    bool success = await resolve(uri);
+
+    if(!success && mounted){
+      Util.showSnackBar(context, content: const Text("Invalid QR code provided"));
+    }
+
+  }
+
+
+  void _openQrCodeScanner() {
+    Navigator.push(
+      context,
+      Util.createScaffoldRoute(view: QrCodeScanView(onRead: _resolveScannedUri, title: "Scan a users QR code"))
+    );
   }
 
   /// Prompts the user to confirm the promotion and executes it
@@ -63,8 +106,8 @@ class _ManageMembersViewState extends State<ManageMembersView> {
     // print("Is user admin");
     bool isMe = member.uid == houseHold.thisUser.uid;
     bool isAdmin = houseHold.isUserAdmin(member);
-    bool isPromotable = isAdmin && amIAdmin;
-    bool isRemovable = amIAdmin && isMe;
+    bool isPromotable = !isAdmin && amIAdmin;
+    bool isRemovable = amIAdmin && !isMe;
     // bool isDemotable = amIAdmin && !isMe && isAdmin;
     // isPromotable = true;
     return ListTile(
@@ -98,6 +141,16 @@ class _ManageMembersViewState extends State<ManageMembersView> {
       body: ListView(
         children: [
           for (var member in houseHold.members) _buildMemberItem(member),
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Align(
+              alignment: Alignment.center,
+              child: TextButton(
+                onPressed: _openQrCodeScanner,
+                child: const Text("ADD MEMBER"),
+              ),
+            ),
+          )
         ],
       ),
     );
