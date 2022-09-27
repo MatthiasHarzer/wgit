@@ -5,6 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:wgit/util/util.dart';
 
+import '../services/types.dart';
+import '../theme.dart';
+
 class ConfirmDialog {
   final BuildContext context;
   final String title;
@@ -333,5 +336,34 @@ Widget buildCircularAvatar({required String url, required double dimension}) {
         )),
       ),
     ),
+  );
+}
+
+Widget buildGroupListTile({required Group group, Widget? action}){
+  var members = group.members.where((m)=>group.houseHold.members.contains(m));
+  return ListTile(
+    leading: ConstrainedBox(
+      constraints:
+      const BoxConstraints(minHeight: double.infinity, maxWidth: 70),
+      child: Align(
+        alignment: Alignment.center,
+        child: Text(group.name,
+            style: TextStyle(
+                fontWeight: FontWeight.w500,
+                color: theme.colorScheme.secondary,
+                fontSize: 16)),
+      ),
+    ),
+    title: Text("MEMBERS:",
+        style: TextStyle(
+            fontWeight: FontWeight.w500,
+            color: Colors.grey[500],
+            fontSize: 14)),
+    subtitle: Text(members.map((m) => m.displayName).join(",   "),
+        style: TextStyle(
+            fontWeight: FontWeight.w500,
+            color: Colors.grey[300],
+            fontSize: 14)),
+    trailing: action,
   );
 }

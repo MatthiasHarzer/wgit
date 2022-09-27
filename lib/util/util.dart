@@ -55,5 +55,13 @@ class Util {
     return m.toString().padRight(l, "0");
   }
 
+  static List mulitply(List m, int n) {
+    List u = [];
+    for (int i = 0; i < n; i++) {
+      u.addAll([...m]);
+    }
+    return u;
+  }
+
 
 }

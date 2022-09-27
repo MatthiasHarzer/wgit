@@ -42,7 +42,9 @@ class _HouseHoldStandingsItemState extends State<_HouseHoldStandingsItem> {
   void initState() {
     super.initState();
 
-    widget.houseHold.onChange(() => setState(() {}));
+    widget.houseHold.onChange(() {
+      if (mounted) setState(() {});
+    });
   }
 
   /// Builds a colored text widget based on the value (value < 0 = red, >0 = grenn)

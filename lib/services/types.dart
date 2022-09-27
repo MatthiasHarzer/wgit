@@ -1,4 +1,5 @@
 // ignore_for_file: constant_identifier_names
+import 'package:collection/collection.dart';
 import 'dart:async';
 import 'dart:ui';
 
@@ -92,7 +93,7 @@ class Activity {
   }
 
   @override
-  String toString(){
+  String toString() {
     return "Action<$label @$id on $date with $contributions>";
   }
 
@@ -109,8 +110,8 @@ class Activity {
 /// A group consists of a subset of [AppUsers] from one [HouseHold] members, sharing financials
 class Group {
   late final String id;
-  late final String name;
-  late final List<AppUser> members;
+  late String name;
+  late List<AppUser> members;
   late final HouseHold houseHold;
 
   bool get isDefault => id == "all";
@@ -120,7 +121,11 @@ class Group {
     required this.name,
     required this.members,
     required this.houseHold,
-  });
+  }){
+    if(id == "all"){
+      members = houseHold.members;
+    }
+  }
 
   Group.createDefault({required this.houseHold}) {
     id = "all";
@@ -128,6 +133,17 @@ class Group {
     members = [...houseHold.members];
   }
 
+  Group.temp(HouseHold houseHold)
+      : this._(id: "", name: "", members: List.empty(growable: true), houseHold: houseHold);
+
+  Group copy(){
+    return Group._(
+      houseHold: houseHold,
+      members: members,
+      id: id,
+      name: name,
+    );
+  }
   static Future<Group> fromDoc(
       DocumentSnapshot doc, HouseHold houseHold) async {
     var id = doc.id;
@@ -242,7 +258,7 @@ class AppUser {
   }
 
   @override
-  String toString(){
+  String toString() {
     return "AppUser<$displayName @$uid>";
   }
 }
@@ -289,7 +305,15 @@ class HouseHold {
   late List<AppUser> members;
   late List<AppUser> admins;
 
-  List<AppUser> get validAdmins => members.where((m) => admins.contains(m)).toList();
+  final List<VoidCallback> _onChange = [];
+  List<Activity> activities = [];
+  List<Group> groups = [];
+  Map<String, HouseHoldMemberData> memberData = {};
+
+  Group? get defaultGroup => groups.firstWhereOrNull((g) => g.isDefault);
+
+  List<AppUser> get validAdmins =>
+      members.where((m) => admins.contains(m)).toList();
 
   final List<StreamController<List<Activity>>> _activitiesStreamControllers =
       [];
@@ -310,10 +334,7 @@ class HouseHold {
   //   }
   // }
 
-  final List<VoidCallback> _onChange = [];
-  List<Activity> activities = [];
-  List<Group> groups = [];
-  Map<String, HouseHoldMemberData> memberData = {};
+
 
   void onChange(VoidCallback cb) {
     _onChange.add(cb);
@@ -474,6 +495,9 @@ class HouseHold {
     name = data["name"];
     members = await AppUser.fromUids(data["members"].cast<String>());
     admins = await AppUser.fromUids(data["admins"].cast<String>());
+
+    defaultGroup?.members = members;
+
     return this;
   }
 

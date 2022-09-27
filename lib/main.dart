@@ -45,6 +45,9 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
+    var primary = Colors.deepOrange;
+    var accent = Colors.deepOrangeAccent;
+    
     var theme = ThemeData(
       dividerTheme: const DividerThemeData(thickness: 0.3, space: 1),
       iconTheme: IconThemeData(
@@ -53,27 +56,27 @@ class MyApp extends StatelessWidget {
       switchTheme: SwitchThemeData(
         thumbColor: MaterialStateProperty.resolveWith((states) =>
             states.contains(MaterialState.selected)
-                ? Colors.deepOrangeAccent
+                ? accent
                 : null),
         trackColor: MaterialStateProperty.resolveWith((states) =>
             states.contains(MaterialState.selected)
-                ? Colors.deepOrange[500]
+                ? primary[500]
                 : null),
       ),
       appBarTheme: AppBarTheme(
-        backgroundColor: Colors.deepOrange[700],
+        backgroundColor: primary[700],
       ),
       buttonTheme: ButtonThemeData(
         textTheme: ButtonTextTheme.accent,
-        colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.deepOrange),
+        colorScheme: ColorScheme.fromSwatch(primarySwatch: primary),
       ),
       textButtonTheme: TextButtonThemeData(
         style: ButtonStyle(
           textStyle: MaterialStateProperty.all(
-            const TextStyle(
+            TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
-                color: Colors.deepOrange),
+                color: primary),
           ),
         ),
       ),
@@ -90,9 +93,12 @@ class MyApp extends StatelessWidget {
       snackBarTheme: SnackBarThemeData(
         backgroundColor: Colors.grey.shade900,
         contentTextStyle: TextStyle(color: Colors.grey[200]),
-        actionTextColor: Colors.deepOrangeAccent,
+        actionTextColor: accent,
       ),
-      primarySwatch: Colors.deepOrange,
+      checkboxTheme: CheckboxThemeData(
+        fillColor: MaterialStateProperty.all(accent)
+      ),
+      primarySwatch: primary,
       brightness: Brightness.dark,
     );
     theme = theme.copyWith(

@@ -1,7 +1,8 @@
-import 'package:expandable/expandable.dart';
 import 'package:flutter/material.dart';
 import 'package:wgit/util/components.dart';
+import 'package:wgit/views/household/household_member_groups.dart';
 import 'package:wgit/views/household/household_standings.dart';
+import 'package:wgit/views/household/manage_member_groups.dart';
 import 'package:wgit/views/household/manage_members_view.dart';
 
 import '../../services/types.dart';
@@ -25,19 +26,17 @@ class _HouseHoldViewState extends State<HouseHoldView> {
   void initState() {
     super.initState();
 
-    houseHold.onChange(() =>
-    {
-      if (mounted) {setState(() {})}
-    });
+    houseHold.onChange(() => {
+          if (mounted) {setState(() {})}
+        });
   }
 
   Future _sendMoneyToMemberTapped(AppUser member) async {
-
     var dialog = UserInputDialog(
-        context: context,
-        title: "How much money did you exchange with ${member.displayName}?",
-        inputType: TextInputType.number,
-        placeHolder: "Amount",
+      context: context,
+      title: "How much money did you exchange with ${member.displayName}?",
+      inputType: TextInputType.number,
+      placeHolder: "Amount",
       submit: "EXCHANGE",
     )..show();
     String retval = await dialog.future ?? "";
@@ -45,9 +44,10 @@ class _HouseHoldViewState extends State<HouseHoldView> {
 
     print("SENDING $asDouble to ${member.displayName}");
 
-    if(asDouble <= 0) return;
+    if (asDouble <= 0) return;
 
-    await houseHold.exchangeMoney(from: houseHold.thisUser, to: member, amount: asDouble);
+    await houseHold.exchangeMoney(
+        from: houseHold.thisUser, to: member, amount: asDouble);
   }
 
   void _openMemberManagement() {
@@ -56,6 +56,17 @@ class _HouseHoldViewState extends State<HouseHoldView> {
       context,
       Util.createScaffoldRoute(
         view: ManageMembersView(
+          houseHold: houseHold,
+        ),
+      ),
+    );
+  }
+
+  void _openMemberGroupsManagement() {
+    Navigator.push(
+      context,
+      Util.createScaffoldRoute(
+        view: ManageMemberGroupsView(
           houseHold: houseHold,
         ),
       ),
@@ -71,13 +82,28 @@ class _HouseHoldViewState extends State<HouseHoldView> {
           content: HouseHoldMembersSnippet(
             houseHold: houseHold,
           ),
-          action: houseHold.isUserAdmin(houseHold.thisUser)
+          action: houseHold.thisUserIsAdmin
               ? TextButton(
-            onPressed: _openMemberManagement,
-            child: const Text(
-              "MANAGE",
-            ),
-          )
+                  onPressed: _openMemberManagement,
+                  child: const Text(
+                    "MANAGE",
+                  ),
+                )
+              : null,
+        ),
+        const Divider(),
+        ExpandableListItem(
+          title: "GROUPS",
+          content: MemberGroupsSnippet(
+            houseHold: houseHold,
+          ),
+          action: houseHold.thisUserIsAdmin
+              ? TextButton(
+                  onPressed: _openMemberGroupsManagement,
+                  child: const Text(
+                    "MANAGE",
+                  ),
+                )
               : null,
         ),
         const Divider(),
@@ -97,7 +123,6 @@ class _HouseHoldViewState extends State<HouseHoldView> {
           ),
           initialExpanded: true,
         ),
-
         const SizedBox(
           height: 60,
         )
