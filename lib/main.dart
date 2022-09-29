@@ -1,5 +1,5 @@
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:wgit/services/config_service.dart';
 import 'package:wgit/services/firebase/auth_service.dart';
@@ -11,6 +11,7 @@ import 'package:wgit/views/add_or_create_household/base.dart';
 import 'package:wgit/views/add_user_to_household_view.dart';
 import 'package:wgit/views/edit_or_new_activity.dart';
 import 'package:wgit/views/household/household_view.dart';
+import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
 
 import 'drawer/drawer.dart';
 import 'firebase_options.dart';
@@ -31,10 +32,14 @@ void main() async {
   //     await FirebaseDynamicLinks.instance.getDynamicLink(Uri.parse(link));
 
   // Get any initial links
-  final PendingDynamicLinkData? initialLink =
-      await FirebaseDynamicLinks.instance.getInitialLink();
+  if(kIsWeb){
+    runApp(const MyApp(initialLink: null));
+  }else{
+    final PendingDynamicLinkData? initialLink =
+        await FirebaseDynamicLinks.instance.getInitialLink();
 
-  runApp(MyApp(initialLink: initialLink));
+    runApp(MyApp(initialLink: initialLink));
+  }
 }
 
 class MyApp extends StatelessWidget {

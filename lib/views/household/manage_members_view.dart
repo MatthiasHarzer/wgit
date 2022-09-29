@@ -1,4 +1,5 @@
 import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:wgit/services/firebase/firebase_service.dart';
 import 'package:wgit/services/types.dart';
@@ -42,32 +43,44 @@ class _ManageMembersViewState extends State<ManageMembersView> {
     );
   }
 
-  void _resolveScannedUri(String uri)async{
-
-    Future<bool> resolve(String uri) async{
+  void _resolveScannedUri(String uri) async {
+    if(kIsWeb) return;
+    Future<bool> resolve(String uri) async {
       final PendingDynamicLinkData? dynLink =
-      await FirebaseDynamicLinks.instance.getDynamicLink(Uri.parse(uri));
-      if(dynLink == null) return false;
+          await FirebaseDynamicLinks.instance.getDynamicLink(Uri.parse(uri));
+      if (dynLink == null) return false;
       AppUser? dynUser = await FirebaseService.resolveDynLinkUser(dynLink);
       if (dynUser == null) return false;
-      if(dynUser.uid == AuthService.appUser?.uid) return false;
+      if (dynUser.uid == AuthService.appUser?.uid) return false;
       _openAddUserToHouseholdDialog(dynUser);
       return true;
     }
+
     bool success = await resolve(uri);
 
-    if(!success && mounted){
-      Util.showSnackBar(context, content: const Text("Invalid QR code provided"));
+    if (!success && mounted) {
+      Util.showSnackBar(context,
+          content: const Text("Invalid QR code provided"));
     }
-
   }
 
-
-  void _openQrCodeScanner() {
-    Navigator.push(
-      context,
-      Util.createScaffoldRoute(view: QrCodeScanView(onRead: _resolveScannedUri, title: "Scan a users QR code"))
-    );
+  void _openQrCodeScanner() async {
+    if (kIsWeb) {
+      var dialog = UserInfoDialog(
+        context: context,
+        title: "This operation is currently not supported on the web version!",
+        subtitle: "You can use the mobile app to add members.",
+      )..show();
+      await dialog.future;
+    } else {
+      Navigator.push(
+        context,
+        Util.createScaffoldRoute(
+          view: QrCodeScanView(
+              onRead: _resolveScannedUri, title: "Scan a users QR code"),
+        ),
+      );
+    }
   }
 
   /// Prompts the user to confirm the promotion and executes it

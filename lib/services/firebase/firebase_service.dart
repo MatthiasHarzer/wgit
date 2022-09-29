@@ -3,8 +3,10 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
+import 'package:wgit/secrets.dart';
 import 'package:wgit/util/consts.dart';
 
+import '../../util/util.dart';
 import '../types.dart';
 import 'auth_service.dart';
 import 'firebase_ref_service.dart';
@@ -12,7 +14,6 @@ import 'firebase_ref_service.dart';
 /// Dart interface to communicate with the firebase platform
 class FirebaseService {
   static FirebaseFirestore get _firestore => FirebaseFirestore.instance;
-  static FirebaseDynamicLinks get _dynLinks => FirebaseDynamicLinks.instance;
   static bool _initialized = false;
 
   static AppUser? get user => AuthService.appUser;
@@ -231,19 +232,30 @@ class FirebaseService {
     });
 
   }
+
   static Future<String> createDynamicLinkFor({required AppUser user}) async {
-    final targetUrl = "$DYNLINK_REDIRECT_URI/?user=${user.uid}";
-    final params = DynamicLinkParameters(
-        link: Uri.parse(targetUrl),
-        uriPrefix: DYNLINK_URI_PREFIX,
-      androidParameters: const AndroidParameters(
-        packageName: "dev.taptwice.wgit"
-      )
-    );
+    final apiUrl = "$API_ENDPOINT/firebase/getdynamiclink?key=$TAPTWICE_FIREBSE_API_KEY&user_id=${user.uid}";
+    final data = await Util.makeRequest(url: apiUrl);
+    final link = data["link"];
 
-    final dynLink = await _dynLinks.buildShortLink(params);
+    if(link == null){
+      throw Exception("Failed to generate dynamic link from response: $data");
+    }
 
-    return dynLink.shortUrl.toString();
+    return link;
+
+    // final targetUrl = "$DYNLINK_REDIRECT_URI/?user=${user.uid}";
+    // final params = DynamicLinkParameters(
+    //     link: Uri.parse(targetUrl),
+    //     uriPrefix: DYNLINK_URI_PREFIX,
+    //   androidParameters: const AndroidParameters(
+    //     packageName: "dev.taptwice.wgit"
+    //   )
+    // );
+    //
+    // final dynLink = await _dynLinks.buildShortLink(params);
+    //
+    // return dynLink.shortUrl.toString();
 
     // print("dynLink $dynLink");
     // print(dynLink.shortUrl);

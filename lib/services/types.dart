@@ -381,7 +381,12 @@ class HouseHold {
     var t = allStream.where((c) => c.stream == stream);
     if (t.isEmpty) return;
 
-    t.forEach((c) => c.close());
+    t.forEach((c){
+      _activitiesStreamControllers.remove(c);
+      _groupsStreamControllers.remove(c);
+      c.close();
+    });
+
   }
 
   /// Updates an array of [controllers] with the given data

@@ -157,6 +157,58 @@ class UserInputDialog {
   }
 }
 
+class UserInfoDialog {
+  final BuildContext context;
+  final String title;
+  final String? subtitle;
+  final String buttonLabel;
+  final VoidCallback? onClose;
+  final Completer _completer = Completer();
+  Future get future => _completer.future;
+
+  UserInfoDialog({
+    required this.context,
+    required this.title,
+    this.subtitle,
+    this.buttonLabel = "CLOSE",
+    this.onClose,
+  });
+
+  void _onClose(){
+    if(onClose != null) onClose!();
+    _completer.complete();
+    Navigator.pop(context);
+  }
+
+  Widget get widget => AlertDialog(
+        title: Text(
+          title,
+          textAlign: TextAlign.left,
+          style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 22,
+              color: Colors.grey[300]),
+        ),
+        content: subtitle == null ? null : Text(
+          subtitle!,
+          style: TextStyle(
+            fontWeight: FontWeight.w400,
+            color: Colors.grey[400]
+          )
+        ),
+        actions: [
+          TextButton(
+            onPressed: _onClose,
+            child: Text(buttonLabel),
+          )
+        ],
+      );
+
+  void show() {
+    showDialog(context: context, builder: (ctx) => widget);
+  }
+}
+
 /// An expandable list item with a title and an optional action
 class ExpandableListItem extends StatelessWidget {
   final String title;
@@ -287,6 +339,7 @@ class AsyncQrImageLoader extends StatefulWidget {
 
 class _AsyncQrImageLoaderState extends State<AsyncQrImageLoader> {
   String? _content;
+  String? _exception;
 
   @override
   void initState() {
@@ -296,12 +349,30 @@ class _AsyncQrImageLoaderState extends State<AsyncQrImageLoader> {
   }
 
   void _loadAsync() async {
-    _content = await widget.contentLoader();
+    try {
+      _content = await widget.contentLoader();
+    } catch (exception) {
+      _exception = exception.toString();
+    }
     setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_exception != null) {
+      return Padding(
+        padding: const EdgeInsets.all(10.0),
+        child: Column(
+          children: [
+            const Text(
+              "An error occurced generating the QR code!",
+              style: TextStyle(fontWeight: FontWeight.w500),
+            ),
+            Text(_exception!),
+          ],
+        ),
+      );
+    }
     if (_content != null) {
       return Container(
         color: Colors.grey[200],
@@ -339,12 +410,12 @@ Widget buildCircularAvatar({required String url, required double dimension}) {
   );
 }
 
-Widget buildGroupListTile({required Group group, Widget? action}){
-  var members = group.members.where((m)=>group.houseHold.members.contains(m));
+Widget buildGroupListTile({required Group group, Widget? action}) {
+  var members = group.members.where((m) => group.houseHold.members.contains(m));
   return ListTile(
     leading: ConstrainedBox(
       constraints:
-      const BoxConstraints(minHeight: double.infinity, maxWidth: 70),
+          const BoxConstraints(minHeight: double.infinity, maxWidth: 70),
       child: Align(
         alignment: Alignment.center,
         child: Text(group.name,

@@ -54,13 +54,11 @@ class _JoinOrCreateHouseholdViewState extends State<JoinOrCreateHouseholdView> {
         style: TextStyle(
             fontWeight: FontWeight.bold, fontSize: 20, color: Colors.grey[300]),
       ),
-      content: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          AsyncQrImageLoader(
-            contentLoader: AuthService.appUser!.getDynLink,
-          )
-        ],
+      content: Align(
+        alignment: Alignment.center,
+        child: AsyncQrImageLoader(
+          contentLoader: AuthService.appUser!.getDynLink,
+        ),
       ),
       actions: [
         TextButton(

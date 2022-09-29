@@ -1,6 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="dev.taptwice.wgit">
 
+    <uses-permission android:name="android.permission.INTERNET" />
 
    <application
         android:label="wgit"
@@ -30,6 +31,7 @@
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE"/>
+
                 <data
                     android:host="wgit.page.link"
                     android:scheme="https"/>
