@@ -22,7 +22,7 @@ class _EditOrNewActivityState extends State<EditOrNewActivity> {
   HouseHold get houseHold => widget.houseHold;
 
   List<AppUser> get availableUsers => <AppUser>{
-        ...selectedGroup.members,
+        ...selectedGroup.members.where((m) => houseHold.isUserActive(m)),
         ...tempActivity.contributions.keys
       }.toList();
 

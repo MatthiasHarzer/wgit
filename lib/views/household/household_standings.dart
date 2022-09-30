@@ -25,6 +25,7 @@ class _HouseHoldStandingsItemState extends State<_HouseHoldStandingsItem> {
   AppUser get member => widget.member;
   HouseHoldMemberData get memberData => widget.houseHold.memberDataOf(member: member);
   bool get isActiveUser => widget.houseHold.isUserActive(member);
+  bool get visible => isActiveUser || memberData.standing != 0;
 
   bool working = false;
 
@@ -38,9 +39,6 @@ class _HouseHoldStandingsItemState extends State<_HouseHoldStandingsItem> {
     widget.houseHold.onChange(() {
       if (mounted) setState(() {});
     });
-
-
-
   }
 
 
@@ -79,10 +77,11 @@ class _HouseHoldStandingsItemState extends State<_HouseHoldStandingsItem> {
 
   @override
   Widget build(BuildContext context) {
+    if(!visible) return Container();
 
     final totalPaid = memberData.totalPaid;
     final totalShouldPay = memberData.totalShouldPay;
-    final standing = totalPaid - totalShouldPay;
+    final standing = memberData.standing;
 
     final titleStyle = TextStyle(
       fontWeight: FontWeight.w500,
@@ -93,7 +92,6 @@ class _HouseHoldStandingsItemState extends State<_HouseHoldStandingsItem> {
     final subtitleStyle = TextStyle(
         fontSize: isActiveUser ? 15 : 12
     );
-
 
     const avatarSize = 35.0;
 

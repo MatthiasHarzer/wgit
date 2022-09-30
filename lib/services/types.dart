@@ -309,6 +309,8 @@ class HouseHoldMemberData {
   late double totalShouldPay;
   late double totalPaid;
 
+  double get standing => totalPaid - totalShouldPay;
+
   HouseHoldMemberData.emptyOf(AppUser user) {
     id = user.uid;
     totalPaid = 0;
