@@ -16,14 +16,19 @@ class HouseHoldMembersSnippet extends StatelessWidget {
   Widget _buildUserSnippet(AppUser member) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 5),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          buildCircularAvatar(url: member.photoURL, dimension: 55),
-          Column(
-            children: [Text(member.displayName)],
-          )
-        ],
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(
+          maxWidth: 150
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            buildCircularAvatar(url: member.photoURL, dimension: 55),
+            Column(
+              children: [Text(member.displayName, textAlign: TextAlign.center,)],
+            )
+          ],
+        ),
       ),
     );
   }

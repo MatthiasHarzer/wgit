@@ -86,7 +86,7 @@ class _HouseHoldStandingsItemState extends State<_HouseHoldStandingsItem> {
         children: [
           ConstrainedBox(
             constraints: const BoxConstraints(
-              maxWidth: 200
+              maxWidth: 180
             ),
             child: Text(
               "${member.displayName}: ",
