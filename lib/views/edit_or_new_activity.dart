@@ -41,8 +41,6 @@ class _EditOrNewActivityState extends State<EditOrNewActivity> {
   void initState() {
     super.initState();
 
-
-
     tempActivity = Activity.empty();
 
     houseHold.onChange(() {
@@ -58,13 +56,12 @@ class _EditOrNewActivityState extends State<EditOrNewActivity> {
       // for (var entry in tempActivity.contributions.entries) {
       //   print("${entry.key} : ${entry.value}");
       // }
-    } else {
-
-    }
+    } else {}
     selectedGroup = houseHold.defaultGroup!;
     // print(tempActivity.groupId);
-    if(tempActivity.groupId != null){
-      selectedGroup = houseHold.findGroup(tempActivity.groupId) ?? selectedGroup;
+    if (tempActivity.groupId != null) {
+      selectedGroup =
+          houseHold.findGroup(tempActivity.groupId) ?? selectedGroup;
     }
   }
 
@@ -82,8 +79,8 @@ class _EditOrNewActivityState extends State<EditOrNewActivity> {
         tempActivity.label.isEmpty ? "(Unnamed)" : tempActivity.label;
     tempActivity.groupId = selectedGroup.id;
 
-    for(var user in availableUsers){
-      if(!tempActivity.contributions.containsKey(user)){
+    for (var user in availableUsers) {
+      if (!tempActivity.contributions.containsKey(user)) {
         tempActivity.contributions[user] = 0;
       }
     }
@@ -133,9 +130,8 @@ class _EditOrNewActivityState extends State<EditOrNewActivity> {
     }
     return DropdownButton(
       style: TextStyle(
-        color: Theme.of(context).colorScheme.secondary,
-        fontWeight: FontWeight.w500
-      ),
+          color: Theme.of(context).colorScheme.secondary,
+          fontWeight: FontWeight.w500),
       key: dropDownKey,
       value: valueId,
       items: dropDownItems,
@@ -218,36 +214,39 @@ class _EditOrNewActivityState extends State<EditOrNewActivity> {
 
   /// Builds submit / cancel actions
   Widget _buildActions() {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        TextButton(
-          onPressed: _close,
-          child: const Text("DISCARD"),
-        ),
-        ElevatedButton(
-          onPressed: _submit,
-          child: Row(
-            children: [
-              Visibility(
-                visible: working,
-                child: Padding(
-                  padding: const EdgeInsets.only(right: 8.0),
-                  child: SizedBox.square(
-                    dimension: 15,
-                    child: CircularProgressIndicator(
-                      color: Colors.grey[200],
-                      strokeWidth: 3,
+    return Container(
+      color: Colors.grey[800]?.withAlpha(200),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          TextButton(
+            onPressed: _close,
+            child: const Text("DISCARD"),
+          ),
+          ElevatedButton(
+            onPressed: _submit,
+            child: Row(
+              children: [
+                Visibility(
+                  visible: working,
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 8.0),
+                    child: SizedBox.square(
+                      dimension: 15,
+                      child: CircularProgressIndicator(
+                        color: Colors.grey[200],
+                        strokeWidth: 3,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              const Text("SUBMIT")
-            ],
+                const Text("SUBMIT")
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -256,57 +255,69 @@ class _EditOrNewActivityState extends State<EditOrNewActivity> {
     return Scaffold(
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
-        title: const Text("Add Activity"),
+        title: Text(isEditMode ? "Edit Activity" : "Add Activity"),
       ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8.0),
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              TextFormField(
-                initialValue: tempActivity.label,
-                autofocus: !isEditMode,
-                onChanged: (text) => tempActivity.label = text,
-                decoration: const InputDecoration(
-                  border: UnderlineInputBorder(),
-                  labelText: "Label or reason",
+      body: Stack(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 80.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextFormField(
+                      initialValue: tempActivity.label,
+                      autofocus: !isEditMode,
+                      onChanged: (text) => tempActivity.label = text,
+                      decoration: const InputDecoration(
+                        border: UnderlineInputBorder(),
+                        labelText: "Label or reason",
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        const Spacer(),
+                        Text(
+                          "GROUP:",
+                          style: TextStyle(
+                              color: Colors.grey[400],
+                              fontWeight: FontWeight.w500),
+                        ),
+                        const Spacer(),
+                        _buildGroupsSelect(
+                            value: selectedGroup,
+                            options: houseHold.groups,
+                            onChanged: (g) => setState(() {
+                                  selectedGroup = g;
+                                }),
+                            placeHolder: "GORUP"),
+                        const Spacer(),
+                      ],
+                    ),
+                    _buildUsersContributionInputFields(),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 18.0),
+                      child: Divider(
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                    _buildTotal(),
+                  ],
                 ),
               ),
-              Row(
-                children: [
-                  const Spacer(),
-                  Text(
-                    "GROUP:",
-                    style: TextStyle(
-                        color: Colors.grey[400], fontWeight: FontWeight.w500),
-                  ),
-                  const Spacer(),
-                  _buildGroupsSelect(
-                      value: selectedGroup,
-                      options: houseHold.groups,
-                      onChanged: (g) => setState(() {
-                            selectedGroup = g;
-                          }),
-                      placeHolder: "GORUP"),
-                  const Spacer(),
-                ],
-              ),
-              _buildUsersContributionInputFields(),
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 18.0),
-                child: Divider(
-                  color: Colors.grey[600],
-                ),
-              ),
-              _buildTotal(),
-              Padding(
-                padding: const EdgeInsets.only(top: 70),
-                child: _buildActions(),
-              ),
-            ],
+            ),
           ),
-        ),
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: _buildActions(),
+          )
+        ],
       ),
+      // bottomNavigationBar: _buildActions(),
+      // floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      // floatingActionButton: _buildActions(),
     );
   }
 }
