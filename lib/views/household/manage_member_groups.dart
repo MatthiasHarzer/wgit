@@ -128,7 +128,7 @@ class _CreateOrEditGroupDialogState extends State<_CreateOrEditGroupDialog> {
                 onChanged: (c) {
                   group.name = c;
                 },
-                keyboardType: TextInputType.number,
+                keyboardType: TextInputType.text,
                 decoration: const InputDecoration(
                   border: UnderlineInputBorder(),
                   labelText: "Group Name",
@@ -158,27 +158,30 @@ class _CreateOrEditGroupDialogState extends State<_CreateOrEditGroupDialog> {
                   ],
                 ),
               ),
-              TextButton(
-                onPressed: _deletePressed,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Visibility(
-                      visible: deleteWorking,
-                      child: Padding(
-                        padding: const EdgeInsets.only(right: 8.0),
-                        child: SizedBox.square(
-                          dimension: 15,
-                          child: CircularProgressIndicator(
-                            color: Theme.of(context).errorColor,
-                            strokeWidth: 3,
+              Visibility(
+                visible: widget.isEdit,
+                child: TextButton(
+                  onPressed: _deletePressed,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Visibility(
+                        visible: deleteWorking,
+                        child: Padding(
+                          padding: const EdgeInsets.only(right: 8.0),
+                          child: SizedBox.square(
+                            dimension: 15,
+                            child: CircularProgressIndicator(
+                              color: Theme.of(context).errorColor,
+                              strokeWidth: 3,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    Text("DELETE GROUP", style: TextStyle(color: Theme.of(context).errorColor),),
-                  ],
-                ),),
+                      Text("DELETE GROUP", style: TextStyle(color: Theme.of(context).errorColor),),
+                    ],
+                  ),),
+              ),
             ],
           ),
         ),
