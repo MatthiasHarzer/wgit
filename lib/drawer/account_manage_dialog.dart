@@ -19,9 +19,9 @@ class _AccountManageDialogState extends State<AccountManageDialog> {
   void _signOutPressed() async {
     if (working) return;
 
-    setState(() {
-      working = true;
-    });
+
+    working = true;
+
 
     var dialog = ConfirmDialog(
         context: context,
@@ -36,9 +36,8 @@ class _AccountManageDialogState extends State<AccountManageDialog> {
       // snackBarText = "Successfully signed out";
     }
 
-    setState(() {
-      working = false;
-    });
+
+    working = false;
 
   }
 
@@ -78,7 +77,18 @@ class _AccountManageDialogState extends State<AccountManageDialog> {
               border: UnderlineInputBorder(),
               labelText: "Display Name",
             ),
-          )
+          ),
+          TextButton(
+            style: const ButtonStyle(
+              // backgroundColor: MaterialStateProperty.all(Theme.of(context).colorScheme)
+            ),
+            onPressed: _signOutPressed,
+            child: Text(
+              "SIGN OUT",
+              style: TextStyle(
+                  color: Colors.red[700], fontWeight: FontWeight.w500),
+            ),
+          ),
         ],
       ),
       actions: [
@@ -86,11 +96,10 @@ class _AccountManageDialogState extends State<AccountManageDialog> {
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             TextButton(
-              onPressed: _signOutPressed,
-              child: Text(
-                "SIGN OUT",
-                style: TextStyle(
-                    color: Colors.red[500], fontWeight: FontWeight.w500),
+              onPressed: _close,
+              child: const Text(
+                "DISCARD",
+                style: TextStyle(fontWeight: FontWeight.w500),
               ),
             ),
             TextButton(

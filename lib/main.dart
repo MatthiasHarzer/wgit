@@ -71,10 +71,7 @@ class MyApp extends StatelessWidget {
       appBarTheme: AppBarTheme(
         backgroundColor: primary[700],
       ),
-      buttonTheme: ButtonThemeData(
-        textTheme: ButtonTextTheme.accent,
-        colorScheme: ColorScheme.fromSwatch(primarySwatch: primary),
-      ),
+
       textButtonTheme: TextButtonThemeData(
         style: ButtonStyle(
           textStyle: MaterialStateProperty.all(

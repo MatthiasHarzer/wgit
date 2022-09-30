@@ -23,7 +23,26 @@ class _HouseHoldStandingsItem extends StatefulWidget {
 
 class _HouseHoldStandingsItemState extends State<_HouseHoldStandingsItem> {
   AppUser get member => widget.member;
+  HouseHoldMemberData get memberData => widget.houseHold.memberDataOf(member: member);
+  bool get isActiveUser => widget.houseHold.isUserActive(member);
+
   bool working = false;
+
+
+  final avatarSize = 35.0;
+
+  @override
+  void initState(){
+    super.initState();
+
+    widget.houseHold.onChange(() {
+      if (mounted) setState(() {});
+    });
+
+
+
+  }
+
 
   void _onSendMoneyTaped(AppUser member) async {
     setState(() {
@@ -38,14 +57,7 @@ class _HouseHoldStandingsItemState extends State<_HouseHoldStandingsItem> {
     });
   }
 
-  @override
-  void initState() {
-    super.initState();
 
-    widget.houseHold.onChange(() {
-      if (mounted) setState(() {});
-    });
-  }
 
   /// Builds a colored text widget based on the value (value < 0 = red, >0 = grenn)
   Widget _buildColoredValue(double value, {TextStyle? style}) {
@@ -67,51 +79,66 @@ class _HouseHoldStandingsItemState extends State<_HouseHoldStandingsItem> {
 
   @override
   Widget build(BuildContext context) {
-    HouseHoldMemberData memberData =
-        widget.houseHold.memberDataOf(member: member);
 
-    var totalPaid = memberData.totalPaid;
-    var totalShouldPay = memberData.totalShouldPay;
-    var standing = totalPaid - totalShouldPay;
+    final totalPaid = memberData.totalPaid;
+    final totalShouldPay = memberData.totalShouldPay;
+    final standing = totalPaid - totalShouldPay;
 
-    var titleStyle = TextStyle(
+    final titleStyle = TextStyle(
       fontWeight: FontWeight.w500,
-      fontSize: 18,
+      fontSize: isActiveUser ? 18 : 16,
       color: Colors.grey[400],
     );
 
-    return ListTile(
-      leading: buildCircularAvatar(url: member.photoURL, dimension: 35),
-      title: Row(
-        children: [
-          ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxWidth: 180
+    final subtitleStyle = TextStyle(
+        fontSize: isActiveUser ? 15 : 12
+    );
+
+
+    const avatarSize = 35.0;
+
+    return Opacity(
+      opacity: isActiveUser ? 1.0 : 0.5,
+      child: ListTile(
+        leading: buildCircularAvatar(url: member.photoURL, dimension: avatarSize),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if(!isActiveUser)
+              const Text("INACTIVE", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500), textAlign: TextAlign.left,),
+            Row(
+              children: [
+                ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    maxWidth: 180
+                  ),
+                  child: Text(
+                    "${member.displayName}: ",
+                    style: titleStyle,
+                  ),
+                ),
+                _buildColoredValue(
+                  standing,
+                  style: titleStyle,
+                ),
+              ],
             ),
-            child: Text(
-              "${member.displayName}: ",
-              style: titleStyle,
-            ),
-          ),
-          _buildColoredValue(
-            standing,
-            style: titleStyle,
-          ),
-        ],
-      ),
-      subtitle: Text(
-          "Paid: €${Util.formatAmount(totalPaid)} | Should Pay: €${Util.formatAmount(totalShouldPay)}"),
-      trailing: IconButton(
-        splashRadius: 25,
-        tooltip: "Exchange Money",
-        icon: working
-            ? const CircularProgressIndicator()
-            : const Icon(Icons.payments),
-        onPressed: member.isSelf || working
-            ? null
-            : () {
-                _onSendMoneyTaped(member);
-              },
+          ],
+        ),
+        subtitle: Text(
+            "Paid: €${Util.formatAmount(totalPaid)} | Should Pay: €${Util.formatAmount(totalShouldPay)}", style: subtitleStyle,),
+        trailing: IconButton(
+          splashRadius: 25,
+          tooltip: "Exchange Money",
+          icon: working
+              ? const CircularProgressIndicator()
+              : const Icon(Icons.payments),
+          onPressed: member.isSelf || working
+              ? null
+              : () {
+                  _onSendMoneyTaped(member);
+                },
+        ),
       ),
     );
   }
@@ -132,11 +159,20 @@ class HouseHoldStandings extends StatefulWidget {
 class _HouseHoldStandingsState extends State<HouseHoldStandings> {
   HouseHold get houseHold => widget.houseHold;
 
+  Iterable<AppUser> get _orderedUsers{
+    final members = [...houseHold.memberData.keys];
+    members.sort(
+          (a, b) => houseHold.isUserActive(b) ? 1 : houseHold.isUserActive(a) ? -1 : 0,
+    );
+    return members;
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        for (var member in houseHold.members)
+        for (var member in _orderedUsers)
           _HouseHoldStandingsItem(
             member: member,
             houseHold: houseHold,

@@ -104,8 +104,7 @@ class _EditOrNewActivityState extends State<EditOrNewActivity> {
   }
 
   double _getUserContribution(AppUser user) {
-    if (_contributions.containsKey(user)) return _contributions[user]!;
-    return 0;
+    return _contributions[user] ?? 0;
   }
 
   /// Builds a dropdown select menu option
@@ -154,6 +153,7 @@ class _EditOrNewActivityState extends State<EditOrNewActivity> {
     Widget buildField(AppUser user) {
       double contribution = _getUserContribution(user);
       double perc = contribution * 100 / total;
+      final isActiveUser = houseHold.isUserActive(user);
       String percent;
       if (total == 0) {
         percent = "";
@@ -161,30 +161,33 @@ class _EditOrNewActivityState extends State<EditOrNewActivity> {
         percent = "${perc.round()}%";
       }
 
-      return ListTile(
-        leading: buildCircularAvatar(url: user.photoURL, dimension: 40),
-        trailing: Text(
-          percent,
-          style: const TextStyle(fontWeight: FontWeight.w500),
-        ),
-        title: SizedBox(
-          height: 60,
-          child: Focus(
-            onFocusChange: (focus) {
-              // print(
-              //     "FOCUS to $focus on ${user.displayName} with $contribution");
-              _setUserContribution(user, contribution);
-            },
-            child: TextFormField(
-              initialValue: contribution == 0 ? null : contribution.toString(),
-              onChanged: (c) {
-                contribution = double.tryParse(c) ?? 0;
+      return Opacity(
+        opacity: isActiveUser ? 1 : 0.6,
+        child: ListTile(
+          leading: buildCircularAvatar(url: user.photoURL, dimension: 40),
+          trailing: Text(
+            percent,
+            style: const TextStyle(fontWeight: FontWeight.w500),
+          ),
+          title: SizedBox(
+            height: 60,
+            child: Focus(
+              onFocusChange: (focus) {
+                // print(
+                //     "FOCUS to $focus on ${user.displayName} with $contribution");
                 _setUserContribution(user, contribution);
               },
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                border: const UnderlineInputBorder(),
-                labelText: "${user.displayName}'s contribution",
+              child: TextFormField(
+                initialValue: contribution == 0 ? null : contribution.toString(),
+                onChanged: (c) {
+                  contribution = double.tryParse(c) ?? 0;
+                  _setUserContribution(user, contribution);
+                },
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  border: const UnderlineInputBorder(),
+                  labelText: "${user.displayName}'s contribution",
+                ),
               ),
             ),
           ),
@@ -216,36 +219,39 @@ class _EditOrNewActivityState extends State<EditOrNewActivity> {
   Widget _buildActions() {
     return Container(
       color: Colors.grey[800]?.withAlpha(200),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          TextButton(
-            onPressed: _close,
-            child: const Text("DISCARD"),
-          ),
-          ElevatedButton(
-            onPressed: _submit,
-            child: Row(
-              children: [
-                Visibility(
-                  visible: working,
-                  child: Padding(
-                    padding: const EdgeInsets.only(right: 8.0),
-                    child: SizedBox.square(
-                      dimension: 15,
-                      child: CircularProgressIndicator(
-                        color: Colors.grey[200],
-                        strokeWidth: 3,
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            TextButton(
+              onPressed: _close,
+              child: const Text("DISCARD"),
+            ),
+            ElevatedButton(
+              onPressed: _submit,
+              child: Row(
+                children: [
+                  Visibility(
+                    visible: working,
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 8.0),
+                      child: SizedBox.square(
+                        dimension: 15,
+                        child: CircularProgressIndicator(
+                          color: Colors.grey[200],
+                          strokeWidth: 3,
+                        ),
                       ),
                     ),
                   ),
-                ),
-                const Text("SUBMIT")
-              ],
+                  const Text("SUBMIT")
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

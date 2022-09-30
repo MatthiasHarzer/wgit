@@ -348,7 +348,7 @@ class HouseHold {
   final List<VoidCallback> _onChange = [];
   List<Activity> activities = [];
   List<Group> groups = [];
-  Map<String, HouseHoldMemberData> memberData = {};
+  Map<AppUser, HouseHoldMemberData> memberData = {}; /// uid: data
 
   Group? get defaultGroup => groups.firstWhereOrNull((g) => g.isDefault);
 
@@ -487,9 +487,14 @@ class HouseHold {
         .snapshots()
         .listen((event) async {
       var docs = event.docs;
-      memberData = {
-        for (var doc in docs) doc.id: HouseHoldMemberData.fromDoc(doc)
-      };
+      memberData = {};
+
+      for(var doc in docs){
+        final AppUser? u = await AppUser.fromUid(doc.id);
+        if(u != null){
+          memberData[u] = HouseHoldMemberData.fromDoc(doc);
+        }
+      }
 
       callOnChange();
     });
@@ -562,8 +567,13 @@ class HouseHold {
 
   /// Returns the member data of this household
   HouseHoldMemberData memberDataOf({required AppUser member}) {
-    if (memberData.keys.contains(member.uid)) return memberData[member.uid]!;
+    if (memberData.keys.contains(member)) return memberData[member]!;
     return HouseHoldMemberData.emptyOf(member);
+  }
+
+  /// Returns whether the given [user] is active (member) or only in active (no member but memberdata)
+  bool isUserActive(AppUser user){
+    return members.contains(user);
   }
 
   Group? findGroup(String? groupId){
