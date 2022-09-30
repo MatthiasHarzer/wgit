@@ -273,6 +273,23 @@ class FirebaseService {
     return user;
   }
 
+  /// Modifies a users [displayName] and/or [photoURL]
+  static Future modifyUser({required String uid, String? displayName, String? photoURL})async{
+    Map<String, dynamic> updateData = {};
+
+    if(displayName != null){
+      updateData["displayName"] = displayName;
+    }
+    if(photoURL != null){
+      updateData["photoURL"] = photoURL;
+    }
+
+    if(updateData.keys.isEmpty) return;
+
+    final ref = RefService.refOf(uid: uid);
+    await ref.update(updateData);
+  }
+
   /// Initializes firebase, if not done already
   static void ensureInitialized() {
     if (_initialized) return;

@@ -23,8 +23,8 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
   await ConfigService.ensureInitialized();
-  FirebaseService.ensureInitialized();
   await AuthService.ensureInitialized();
+  FirebaseService.ensureInitialized();
 
   // String link = "https://wgit.page.link/GUDU";
   // String link = "https://wgit.page.link/k29C";

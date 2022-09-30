@@ -2,16 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:wgit/services/firebase/auth_service.dart';
 
 import '../services/firebase/firebase_service.dart';
+import '../services/types.dart';
 import '../util/components.dart';
+import 'account_manage_dialog.dart';
 
-class SignInWidget extends StatefulWidget {
-  const SignInWidget({Key? key}) : super(key: key);
+class AccountWidget extends StatefulWidget {
+  const AccountWidget({Key? key}) : super(key: key);
 
   @override
-  State<SignInWidget> createState() => _SignInWidgetState();
+  State<AccountWidget> createState() => _AccountWidgetState();
 }
 
-class _SignInWidgetState extends State<SignInWidget> {
+class _AccountWidgetState extends State<AccountWidget> {
   bool working = false;
   bool oldSignedIn = false;
 
@@ -19,6 +21,14 @@ class _SignInWidgetState extends State<SignInWidget> {
   void initState() {
     super.initState();
     working = false;
+
+    AppUser.onUpdated(() {
+      if(mounted){
+        setState(() {
+
+        });
+      }
+    });
 
     AuthService.onWorkingUpdate((w) {
       print("MOUNTED $mounted with working: $w");
@@ -29,11 +39,22 @@ class _SignInWidgetState extends State<SignInWidget> {
       }
     });
 
-    AuthService.stateChange.listen((e) => setState(() {}));
+    AuthService.stateChange.listen((e) {
+      if (mounted) {
+        setState(() {});
+      }
+    });
+  }
+
+  void _manageAccountTapped() {
+    showDialog(
+      context: context,
+      builder: (context) => const AccountManageDialog(),
+    );
   }
 
   /// Generates the leading widget for the list tile
-  Widget _getLeading() {
+  Widget _buildLeading() {
     double size = 43;
     Widget widget;
     if (working) {
@@ -63,8 +84,22 @@ class _SignInWidgetState extends State<SignInWidget> {
     );
   }
 
+  /// Generates the trailing widget (manage button if signed in)
+  Widget _buildTrailing() {
+    if (!AuthService.signedIn) {
+      return const SizedBox.square(
+        dimension: 1,
+      );
+    } else {
+      return TextButton(
+        onPressed: _manageAccountTapped,
+        child: const Text("MANAGE"),
+      );
+    }
+  }
+
   /// Generates the title for the list tile
-  Widget _getTitle() {
+  Widget _buildTitle() {
     String text;
     if (working) {
       text = "Working on it";
@@ -82,7 +117,7 @@ class _SignInWidgetState extends State<SignInWidget> {
   }
 
   /// Generates the subtitle for the list tile
-  Widget _getSubtitle() {
+  Widget _buildSubtitle() {
     String text;
     if (working) {
       if (oldSignedIn) {
@@ -91,7 +126,7 @@ class _SignInWidgetState extends State<SignInWidget> {
         text = "Signing you in...";
       }
     } else if (AuthService.signedIn) {
-      text = "Tap to sign out";
+      text = "Tap to manage account";
     } else {
       text = "Tap to sign in";
     }
@@ -103,17 +138,18 @@ class _SignInWidgetState extends State<SignInWidget> {
     String snackBarText;
     oldSignedIn = AuthService.signedIn;
     if (AuthService.signedIn) {
-      var dialog = ConfirmDialog(
-          context: context,
-          title: "Are you sure you want to sign out?",
-          confirm: "SIGN OUT")
-        ..show();
-      bool confirm = await dialog.future;
-
-      if (confirm) {
-        await AuthService.signOut();
-        snackBarText = "Successfully signed out";
-      }
+      // var dialog = ConfirmDialog(
+      //     context: context,
+      //     title: "Are you sure you want to sign out?",
+      //     confirm: "SIGN OUT")
+      //   ..show();
+      // bool confirm = await dialog.future;
+      //
+      // if (confirm) {
+      //   await AuthService.signOut();
+      //   snackBarText = "Successfully signed out";
+      // }
+      _manageAccountTapped();
     } else {
       bool success = await AuthService.signInWithGoogle();
     }
@@ -128,9 +164,10 @@ class _SignInWidgetState extends State<SignInWidget> {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      title: _getTitle(),
-      subtitle: _getSubtitle(),
-      leading: _getLeading(),
+      title: _buildTitle(),
+      subtitle: _buildSubtitle(),
+      leading: _buildLeading(),
+      // trailing: _buildTrailing(),
       onTap: working ? null : _handleTap,
     );
   }

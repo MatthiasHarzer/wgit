@@ -9,6 +9,7 @@ import 'package:wgit/util/util.dart';
 import '../services/types.dart';
 import '../theme.dart';
 
+/// A dialog to confirm an action with a submit and cancel button
 class ConfirmDialog {
   final BuildContext context;
   final String title;
@@ -77,6 +78,7 @@ class ConfirmDialog {
   }
 }
 
+/// Dialog for taking an text input from the user
 class UserInputDialog {
   final BuildContext context;
   final String title;
@@ -158,6 +160,7 @@ class UserInputDialog {
   }
 }
 
+/// A dialog showing a message and containing a close button
 class UserInfoDialog {
   final BuildContext context;
   final String title;
@@ -343,6 +346,8 @@ class InfoActionWidget extends StatelessWidget {
   }
 }
 
+/// Builds a spinner while the [contentLoader] isn't resolved. The [contentLoader]
+/// can be any async function that returns a String.
 class AsyncQrImageLoader extends StatefulWidget {
   final Future<String> Function() contentLoader;
   final double qrCodeSize;
@@ -415,6 +420,7 @@ class _AsyncQrImageLoaderState extends State<AsyncQrImageLoader> {
   }
 }
 
+/// Builds a unified circular avatar from an [url] taking a [dimension] for height/width
 Widget buildCircularAvatar({required String url, required double dimension}) {
   return SizedBox.square(
     dimension: dimension,
@@ -432,6 +438,7 @@ Widget buildCircularAvatar({required String url, required double dimension}) {
   );
 }
 
+/// Builds a ListTile representing a [group]
 Widget buildGroupListTile({required Group group, Widget? action}) {
   var members = group.members.where((m) => group.houseHold.members.contains(m));
   return ListTile(

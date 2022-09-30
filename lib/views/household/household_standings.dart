@@ -84,9 +84,14 @@ class _HouseHoldStandingsItemState extends State<_HouseHoldStandingsItem> {
       leading: buildCircularAvatar(url: member.photoURL, dimension: 35),
       title: Row(
         children: [
-          Text(
-            "${member.displayName}: ",
-            style: titleStyle,
+          ConstrainedBox(
+            constraints: const BoxConstraints(
+              maxWidth: 200
+            ),
+            child: Text(
+              "${member.displayName}: ",
+              style: titleStyle,
+            ),
           ),
           _buildColoredValue(
             standing,

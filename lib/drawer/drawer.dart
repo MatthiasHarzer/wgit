@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:wgit/drawer/current_household_actions.dart';
-import 'package:wgit/drawer/sign_in_widget.dart';
+import 'package:wgit/drawer/account.dart';
 import 'package:wgit/services/config_service.dart';
 import 'package:wgit/services/firebase/auth_service.dart';
 
@@ -31,7 +31,9 @@ class _MainPageDrawerState extends State<MainPageDrawer> {
     super.initState();
 
     AuthService.stateChange.listen((event) {
-      setState(() {});
+      if (mounted) {
+        setState(() {});
+      }
     });
   }
 
@@ -66,7 +68,7 @@ class _MainPageDrawerState extends State<MainPageDrawer> {
                 ),
               ),
             ),
-            const SignInWidget(),
+            const AccountWidget(),
             Divider(
               color: Colors.grey[600],
               height: 5,
@@ -77,9 +79,8 @@ class _MainPageDrawerState extends State<MainPageDrawer> {
               child: Column(children: [
                 ExpandableListItem(
                   crossSessionConfig: ExpandableCrossSessionConfig(
-                    "drawer_households",
-                    defaultExpanded: true
-                  ),
+                      "drawer_households",
+                      defaultExpanded: true),
                   title: "HOUSEHOLDS",
                   content: HouseholdsWidget(
                     onSwitchTo: _switchToHousehold,
@@ -95,12 +96,11 @@ class _MainPageDrawerState extends State<MainPageDrawer> {
                     title: widget.currentHouseHold!.name,
                     content: DrawerCurrentHouseHoldActions(
                       houseHold: widget.currentHouseHold!,
-                      onAddActivityTapped: (){},
+                      onAddActivityTapped: () {},
                     ),
                     crossSessionConfig: ExpandableCrossSessionConfig(
                         "drawer_current_household",
-                        defaultExpanded: false
-                    ),
+                        defaultExpanded: false),
                   ),
               ]),
             ),

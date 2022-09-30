@@ -1,4 +1,4 @@
-// ignore_for_file: constant_identifier_names
+// ignore_for_file: constant_identifier_names, avoid_function_literals_in_foreach_calls
 import 'package:collection/collection.dart';
 import 'dart:async';
 import 'dart:ui';
@@ -183,11 +183,12 @@ class Role {
 
 /// An user from the database
 class AppUser {
+  static final List<VoidCallback> _onUsersUpdated = [];
   static final Map<String, AppUser> _CACHE = {};
 
   late final String uid;
-  late final String displayName;
-  late final String photoURL;
+  late String displayName;
+  late String photoURL;
   String? dynLink;
 
   bool get isSelf => uid == AuthService.appUser?.uid;
@@ -202,21 +203,45 @@ class AppUser {
       {required this.uid,
       required this.displayName,
       required this.photoURL,
-      this.dynLink});
+      this.dynLink}){
+   final ref = RefService.refOf(uid: uid);
+   ref.snapshots().listen((doc) {
+      final data = doc.data() as Map<String, dynamic>;
+      final modified = _modifyWith(data: data);
+      if(modified){
+        _callOnUpdate();
+      }
+   });
+  }
+
+  bool _modifyWith({required Map<String, dynamic> data}){
+    var dn = data["displayName"] ?? displayName;
+    var pu = data["photoURL"] ?? photoURL;
+    // var dl = data["dynLink"] ?? dynLink;
+    bool updated = dn != displayName;
+    updated |= pu != photoURL;
+
+    displayName = dn;
+    photoURL = pu;
+
+    return updated;
+  }
 
   static AppUser _getCachedOrCreate(
       {required String uid,
       required String displayName,
       required String photoURL,
-      String? dynLink}) {
-    if (_CACHE.containsKey(uid)) return _CACHE[uid]!;
+      String? dynLink, bool noCache = false}) {
+    if (_CACHE.containsKey(uid) && !noCache) return _CACHE[uid]!;
 
     var user = AppUser._(
         uid: uid,
         displayName: displayName,
         photoURL: photoURL,
         dynLink: dynLink);
-    _CACHE[uid] = user;
+    if(!noCache){
+      _CACHE[uid] = user;
+    }
     return user;
   }
 
@@ -228,7 +253,7 @@ class AppUser {
         uid: uid, displayName: displayName, photoURL: photoURL);
   }
 
-  static AppUser fromJson(Map<String, dynamic> data) {
+  static AppUser _fromJson(Map<String, dynamic> data, {bool noCache = false}) {
     var uid = data["uid"];
     var displayName = data["displayName"];
     var photoURL = data["photoURL"];
@@ -237,20 +262,20 @@ class AppUser {
         uid: uid,
         displayName: displayName,
         photoURL: photoURL,
-        dynLink: dynLink);
+        dynLink: dynLink,
+        noCache: noCache);
   }
 
-  static AppUser fromDoc(DocumentSnapshot doc) {
-    return fromJson(doc.data() as Map<String, dynamic>);
-  }
 
   /// Returns the user with the given [uid]
-  static Future<AppUser?> fromUid(String uid) async {
-    if (_CACHE.containsKey(uid)) return _CACHE[uid]!;
+  static Future<AppUser?> fromUid(String uid, {bool noCache = false}) async {
+    if (_CACHE.containsKey(uid) && !noCache) return _CACHE[uid]!;
     var doc = await RefService.refOf(uid: uid).get();
     if (!doc.exists) return null;
-    return fromDoc(doc);
+    final data = doc.data() as Map<String, dynamic>;
+    return _fromJson(data, noCache: noCache);
   }
+
 
   /// Returns a list of users matching the [uids]
   static Future<List<AppUser>> fromUids(Iterable<String> uids) async {
@@ -262,6 +287,14 @@ class AppUser {
   static AppUser? tryGetCached(String uid) {
     if (_CACHE.containsKey(uid)) return _CACHE[uid];
     return null;
+  }
+
+  static void onUpdated(VoidCallback cb){
+    _onUsersUpdated.add(cb);
+  }
+
+  static void _callOnUpdate(){
+    _onUsersUpdated.forEach((cb)=>cb());
   }
 
   @override
@@ -402,6 +435,10 @@ class HouseHold {
     _setupActivityStream();
     _setupGroupsStream();
     _setupMemberDataStream();
+
+    AppUser.onUpdated(() {
+      callOnChange();
+    });
   }
 
   /// Setup realtime updates for activities

@@ -36,9 +36,22 @@ class AuthService {
 
   static Future ensureInitialized() async {
     stateChange.listen((User? user) {
-      if (user != null && !wasSignedIn) {
-        wasSignedIn = true;
-        _onFirstSignInCallbacks.forEach((cb) => cb());
+      if (user != null) {
+        appUser = AppUser.fromFirebaseUser(user);
+        AppUser.fromUid(user.uid, noCache: true).then((user) {
+          print("RESOLVED USER $user");
+          if (user != null) {
+            appUser?.displayName = user.displayName;
+          }
+        });
+
+        if (!wasSignedIn) {
+          wasSignedIn = true;
+          _onFirstSignInCallbacks.forEach((cb) => cb());
+          // appUser = await AppUser.fromUid(user.uid);
+        }
+      } else {
+        appUser = null;
       }
     });
   }
@@ -46,8 +59,7 @@ class AuthService {
   /// The current firebase user
   static User? get _user => FirebaseAuth.instance.currentUser;
 
-  static AppUser? get appUser =>
-      signedIn ? AppUser.fromFirebaseUser(_user!) : null;
+  static AppUser? appUser;
 
   /// Whether the client is signed in or not
   static bool get signedIn => _user != null;
