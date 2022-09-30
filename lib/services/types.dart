@@ -308,6 +308,7 @@ class HouseHoldMemberData {
   late String id;
   late double totalShouldPay;
   late double totalPaid;
+  String role = "member";
 
   double get standing => totalPaid - totalShouldPay;
 
@@ -327,6 +328,7 @@ class HouseHoldMemberData {
 
       totalShouldPay = data["totalShouldPay"].toDouble();
       totalPaid = data["totalPaid"].toDouble();
+      role = data["role"] ?? role;
     }
   }
 
@@ -334,6 +336,7 @@ class HouseHoldMemberData {
     return {
       "totalPaid": totalPaid,
       "totalShouldPay": totalShouldPay,
+      "role": role,
     };
   }
 }
@@ -345,7 +348,7 @@ class HouseHold {
   late String id;
   late String name;
   late List<AppUser> members;
-  late List<AppUser> admins;
+  // late List<AppUser> admins;
 
   final List<VoidCallback> _onChange = [];
   List<Activity> activities = [];
@@ -355,7 +358,7 @@ class HouseHold {
   Group? get defaultGroup => groups.firstWhereOrNull((g) => g.isDefault);
 
   List<AppUser> get validAdmins =>
-      members.where((m) => admins.contains(m)).toList();
+      members.where((m) => isUserAdmin(m)).toList();
 
   final List<StreamController<List<Activity>>> _activitiesStreamControllers =
       [];
@@ -505,8 +508,7 @@ class HouseHold {
   HouseHold._(
       {required this.id,
       required this.name,
-      required this.members,
-      required this.admins}) {
+      required this.members,}) {
     _setup();
   }
 
@@ -529,13 +531,12 @@ class HouseHold {
 
       var name = data["name"];
       var members = await AppUser.fromUids(data["members"].cast<String>());
-      var admins = await AppUser.fromUids(data["admins"].cast<String>());
+      // var admins = await AppUser.fromUids(data["admins"].cast<String>());
 
       houseHold = HouseHold._(
           id: id,
           name: name,
-          members: members.toList(),
-          admins: admins.toList());
+          members: members.toList(),);
       _CACHE[id] = houseHold;
     }
     houseHold.callOnChange();
@@ -550,7 +551,7 @@ class HouseHold {
 
     name = data["name"];
     members = await AppUser.fromUids(data["members"].cast<String>());
-    admins = await AppUser.fromUids(data["admins"].cast<String>());
+    // admins = await AppUser.fromUids(data["admins"].cast<String>());
 
     defaultGroup?.members = members;
 
@@ -559,7 +560,7 @@ class HouseHold {
 
   /// Determines if the given [user] is an admin in this household
   bool isUserAdmin(AppUser user) {
-    return admins.contains(user);
+    return memberDataOf(member: user).role == Role.ADMIN;
   }
 
   /// Returns the role name depending on [isUserAdmin]

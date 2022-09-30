@@ -74,11 +74,16 @@ class FirebaseService {
   static Future promoteMember(HouseHold houseHold, AppUser member) async {
     if (!houseHold.members.contains(member)) return;
 
-    var admins = [...houseHold.admins];
-    admins.add(member);
+    // var admins = [...houseHold.admins];
+    // admins.add(member);
 
-    await RefService.refOf(houseHoldId: houseHold.id)
-        .update({"admins": admins.map((a) => a.uid).toList()});
+    await RefService.memberDataRefOf(houseHoldId: houseHold.id, uid: member.uid)
+      .update({
+      "role": Role.ADMIN
+    });
+
+    // await RefService.refOf(houseHoldId: houseHold.id)
+    //     .update({"admins": admins.map((a) => a.uid).toList()});
   }
 
   static Future deleteHouseHold(HouseHold houseHold)async{
@@ -120,8 +125,11 @@ class FirebaseService {
     var docRef = await RefService.householdsRef.add({
       "name": name,
       "members": [user!.uid],
-      "admins": [user!.uid],
+      // "admins": [user!.uid],
     });
+    var empty = HouseHoldMemberData.emptyOf(user!);
+    empty.role = Role.ADMIN;
+    await RefService.memberDataRefOf(houseHoldId: docRef.id, uid: user!.uid).set(empty.toJson());
     var doc = await docRef
         .get(); // Just to make sure the household was really created
 
