@@ -23,6 +23,7 @@ class _CreateOrEditGroupDialogState extends State<_CreateOrEditGroupDialog> {
   ThemeData get theme => Theme.of(context);
 
   bool working = false;
+  bool deleteWorking = false;
 
   HouseHold get houseHold => group.houseHold;
 
@@ -63,6 +64,26 @@ class _CreateOrEditGroupDialogState extends State<_CreateOrEditGroupDialog> {
       });
     }
     _close();
+  }
+
+  void _deletePressed()async{
+    if(deleteWorking) return;
+    setState(() {
+      deleteWorking  = true;
+    });
+      var dialog = ConfirmDialog(context: context,
+      title: "Delete group \"${group.name}\"?", confirm: "DELETE")..show();
+
+      final confirm = await dialog.future;
+
+      if(confirm){
+        await FirebaseService.deleteGroup(houseHoldId: houseHold.id, groupId: group.id);
+        _close();
+      }
+
+    setState(() {
+      deleteWorking  = false;
+    });
   }
 
   Widget _buildUserSelect(AppUser user) {
@@ -132,10 +153,32 @@ class _CreateOrEditGroupDialogState extends State<_CreateOrEditGroupDialog> {
                             _buildUserSelect(member),
                         ],
                       ),
-                    )
+                    ),
+
                   ],
                 ),
-              )
+              ),
+              TextButton(
+                onPressed: _deletePressed,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Visibility(
+                      visible: deleteWorking,
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 8.0),
+                        child: SizedBox.square(
+                          dimension: 15,
+                          child: CircularProgressIndicator(
+                            color: Theme.of(context).errorColor,
+                            strokeWidth: 3,
+                          ),
+                        ),
+                      ),
+                    ),
+                    Text("DELETE GROUP", style: TextStyle(color: Theme.of(context).errorColor),),
+                  ],
+                ),),
             ],
           ),
         ),

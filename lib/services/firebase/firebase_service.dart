@@ -233,6 +233,10 @@ class FirebaseService {
 
   }
 
+  static Future deleteGroup({required String houseHoldId, required String groupId})async{
+    await RefService.groupRefOf(houseHoldId: houseHoldId, groupId: groupId).delete();
+  }
+
   static Future<String> createDynamicLinkFor({required AppUser user}) async {
     final apiUrl = "$API_ENDPOINT/firebase/getdynamiclink?key=$TAPTWICE_FIREBSE_API_KEY&user_id=${user.uid}";
     final data = await Util.makeRequest(url: apiUrl);
