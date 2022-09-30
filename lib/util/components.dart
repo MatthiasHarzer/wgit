@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:expandable/expandable.dart';
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:wgit/services/config_service.dart';
 import 'package:wgit/util/util.dart';
 
 import '../services/types.dart';
@@ -164,6 +165,7 @@ class UserInfoDialog {
   final String buttonLabel;
   final VoidCallback? onClose;
   final Completer _completer = Completer();
+
   Future get future => _completer.future;
 
   UserInfoDialog({
@@ -174,8 +176,8 @@ class UserInfoDialog {
     this.onClose,
   });
 
-  void _onClose(){
-    if(onClose != null) onClose!();
+  void _onClose() {
+    if (onClose != null) onClose!();
     _completer.complete();
     Navigator.pop(context);
   }
@@ -189,13 +191,11 @@ class UserInfoDialog {
               fontSize: 22,
               color: Colors.grey[300]),
         ),
-        content: subtitle == null ? null : Text(
-          subtitle!,
-          style: TextStyle(
-            fontWeight: FontWeight.w400,
-            color: Colors.grey[400]
-          )
-        ),
+        content: subtitle == null
+            ? null
+            : Text(subtitle!,
+                style: TextStyle(
+                    fontWeight: FontWeight.w400, color: Colors.grey[400])),
         actions: [
           TextButton(
             onPressed: _onClose,
@@ -210,12 +210,13 @@ class UserInfoDialog {
 }
 
 /// An expandable list item with a title and an optional action
-class ExpandableListItem extends StatelessWidget {
+class ExpandableListItem extends StatefulWidget {
   final String title;
   final Widget content;
   final Widget? action;
   final bool initialExpanded;
   final bool toUpperCase;
+  final ExpandableCrossSessionConfig? crossSessionConfig;
 
   const ExpandableListItem({
     required this.title,
@@ -223,34 +224,54 @@ class ExpandableListItem extends StatelessWidget {
     this.action,
     this.initialExpanded = false,
     this.toUpperCase = true,
+    this.crossSessionConfig,
     Key? key,
   }) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    ExpandableThemeData theme;
+  State<ExpandableListItem> createState() => _ExpandableListItemState();
+}
 
-    /// Not ideal but with a custom expandable controller the icon wouldn't be reactive, so /shrug
-    if (initialExpanded) {
-      theme = ExpandableThemeData(
-        iconColor: Colors.grey[300],
-        iconPlacement: ExpandablePanelIconPlacement.left,
-        iconRotationAngle: Util.degToRad(-90),
-        collapseIcon: Icons.keyboard_arrow_down,
-        expandIcon: Icons.keyboard_arrow_down,
-      );
-    } else {
-      theme = ExpandableThemeData(
-        iconColor: Colors.grey[300],
-        iconPlacement: ExpandablePanelIconPlacement.left,
-        iconRotationAngle: Util.degToRad(90),
-        collapseIcon: Icons.keyboard_arrow_right,
-        expandIcon: Icons.keyboard_arrow_right,
-      );
-    }
+class _ExpandableListItemState extends State<ExpandableListItem> {
+  bool get initialExpandedValue =>
+      widget.crossSessionConfig?.expanded ?? widget.initialExpanded;
+
+  late final ExpandableController controller;
+
+  @override
+  void initState(){
+    super.initState();
+
+    controller = ExpandableController(
+      initialExpanded: initialExpandedValue
+    );
+
+    controller.addListener(() {
+      if(widget.crossSessionConfig != null){
+        widget.crossSessionConfig!.expanded = controller.expanded;
+      }
+      // setState((){
+      //
+      // });
+      // print("UPDATE ${controller.expanded}");
+    });
+  }
+
+  // void onToggle
+  @override
+  Widget build(BuildContext context) {
+    ExpandableThemeData theme = ExpandableThemeData(
+      iconColor: Colors.grey[300],
+      iconPlacement: ExpandablePanelIconPlacement.left,
+      iconRotationAngle: Util.degToRad(90),
+      collapseIcon: Icons.keyboard_arrow_right,
+      expandIcon: Icons.keyboard_arrow_right,
+    );
+
+
 
     Widget header = Text(
-      toUpperCase ? title.toUpperCase() : title,
+      widget.toUpperCase ? widget.title.toUpperCase() : widget.title,
       style: TextStyle(
         color: Colors.grey[400],
         fontWeight: FontWeight.w500,
@@ -260,16 +281,17 @@ class ExpandableListItem extends StatelessWidget {
       softWrap: true,
     );
 
-    if (action != null) {
+    if (widget.action != null) {
       header = Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [header, action!],
+        children: [header, widget.action!],
       );
     }
 
     return ExpandablePanel(
-      collapsed: initialExpanded ? content : Container(),
+      controller: controller,
+      collapsed: Container(),
       theme: theme,
       header: SizedBox(
         height: 40,
@@ -278,7 +300,7 @@ class ExpandableListItem extends StatelessWidget {
           child: header,
         ),
       ),
-      expanded: initialExpanded ? Container() : content,
+      expanded: widget.content,
     );
   }
 }

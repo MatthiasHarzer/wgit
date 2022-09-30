@@ -11,13 +11,6 @@ class HouseHoldMembersSnippet extends StatelessWidget {
 
   List<AppUser> get members => houseHold.members;
 
-  List mulitply(List m, int n) {
-    List u = [];
-    for (int i = 0; i < n; i++) {
-      u.addAll([...m]);
-    }
-    return u;
-  }
 
   ///
   Widget _buildUserSnippet(AppUser member) {
@@ -44,7 +37,7 @@ class HouseHoldMembersSnippet extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
         child: Row(
           children: [
-            for (var user in mulitply(members, 10)) _buildUserSnippet(user)
+            for (var user in members) _buildUserSnippet(user)
           ],
         ),
       ),

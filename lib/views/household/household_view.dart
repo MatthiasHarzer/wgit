@@ -5,6 +5,7 @@ import 'package:wgit/views/household/household_standings.dart';
 import 'package:wgit/views/household/manage_member_groups.dart';
 import 'package:wgit/views/household/manage_members_view.dart';
 
+import '../../services/config_service.dart';
 import '../../services/types.dart';
 import '../../util/util.dart';
 import 'household_activities_view.dart';
@@ -79,6 +80,10 @@ class _HouseHoldViewState extends State<HouseHoldView> {
       children: [
         ExpandableListItem(
           title: "MEMBERS",
+          crossSessionConfig: ExpandableCrossSessionConfig(
+            "household_view_member",
+            defaultExpanded: false,
+          ),
           content: HouseHoldMembersSnippet(
             houseHold: houseHold,
           ),
@@ -94,6 +99,10 @@ class _HouseHoldViewState extends State<HouseHoldView> {
         const Divider(),
         ExpandableListItem(
           title: "GROUPS",
+          crossSessionConfig: ExpandableCrossSessionConfig(
+            "household_view_groups",
+            defaultExpanded: false,
+          ),
           content: MemberGroupsSnippet(
             houseHold: houseHold,
           ),
@@ -109,6 +118,10 @@ class _HouseHoldViewState extends State<HouseHoldView> {
         const Divider(),
         ExpandableListItem(
           title: "STANDINGS",
+          crossSessionConfig: ExpandableCrossSessionConfig(
+            "household_view_standings",
+            defaultExpanded: true,
+          ),
           content: HouseHoldStandings(
             houseHold: houseHold,
             onMoneySendTap: _sendMoneyToMemberTapped,
@@ -118,6 +131,10 @@ class _HouseHoldViewState extends State<HouseHoldView> {
         const Divider(),
         ExpandableListItem(
           title: "ACTIVITIES",
+          crossSessionConfig: ExpandableCrossSessionConfig(
+            "household_view_activities",
+            defaultExpanded: true,
+          ),
           content: HouseHoldActivitiesView(
             houseHold: houseHold,
           ),

@@ -30,11 +30,49 @@ class ConfigService {
     _currentHouseholdId = _prefs.getString(_CURRENT_HOUSEHOLD_ID) ?? "";
   }
 
+  static dynamic getCustom(String id) {
+    return _prefs.get(id);
+  }
+
+  static Future<void> setCustom(String id, dynamic value) async {
+    switch (value.runtimeType) {
+      case bool:
+        await _prefs.setBool(id, value);
+        break;
+      case int:
+        await _prefs.setInt(id, value);
+        break;
+      case double:
+        await _prefs.setDouble(id, value);
+        break;
+      default:
+        await _prefs.setString(id, value);
+    }
+  }
+
   /// The current household id saved between sessions
   static String get currentHouseholdId => _currentHouseholdId;
 
   static set currentHouseholdId(String id) {
     _prefs.setString(_CURRENT_HOUSEHOLD_ID, id);
     _currentHouseholdId = id;
+  }
+}
+
+/// A config that saves the state
+class ExpandableCrossSessionConfig {
+  final String id;
+  bool _expanded = false;
+  String get _configId => "expandable_cross_session_config_token_$id";
+
+  ExpandableCrossSessionConfig(this.id, {bool defaultExpanded = false}) {
+    _expanded = ConfigService.getCustom(_configId) ?? defaultExpanded;
+  }
+
+  bool get expanded => _expanded;
+
+  set expanded(bool e) {
+    _expanded = e;
+    ConfigService.setCustom(_configId, e);
   }
 }

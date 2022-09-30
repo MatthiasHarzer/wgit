@@ -1,13 +1,11 @@
-import 'package:expandable/expandable.dart';
 import 'package:flutter/material.dart';
 import 'package:wgit/drawer/current_household_actions.dart';
 import 'package:wgit/drawer/sign_in_widget.dart';
+import 'package:wgit/services/config_service.dart';
 import 'package:wgit/services/firebase/auth_service.dart';
 
 import '../services/types.dart';
-import '../theme.dart';
 import '../util/components.dart';
-import '../util/util.dart';
 import 'households_widget.dart';
 
 class MainPageDrawer extends StatefulWidget {
@@ -78,6 +76,10 @@ class _MainPageDrawerState extends State<MainPageDrawer> {
               visible: AuthService.signedIn,
               child: Column(children: [
                 ExpandableListItem(
+                  crossSessionConfig: ExpandableCrossSessionConfig(
+                    "drawer_households",
+                    defaultExpanded: true
+                  ),
                   title: "HOUSEHOLDS",
                   content: HouseholdsWidget(
                     onSwitchTo: _switchToHousehold,
@@ -95,7 +97,10 @@ class _MainPageDrawerState extends State<MainPageDrawer> {
                       houseHold: widget.currentHouseHold!,
                       onAddActivityTapped: (){},
                     ),
-                    initialExpanded: true,
+                    crossSessionConfig: ExpandableCrossSessionConfig(
+                        "drawer_current_household",
+                        defaultExpanded: false
+                    ),
                   ),
               ]),
             ),
