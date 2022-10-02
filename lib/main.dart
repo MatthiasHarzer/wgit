@@ -1,6 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
 import 'package:wgit/services/config_service.dart';
 import 'package:wgit/services/firebase/auth_service.dart';
 import 'package:wgit/services/firebase/firebase_service.dart';
@@ -17,13 +18,21 @@ import 'drawer/drawer.dart';
 import 'firebase_options.dart';
 import 'theme.dart';
 
+final getIt = GetIt.instance;
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
   await ConfigService.ensureInitialized();
-  await AuthService.ensureInitialized();
+
+  final authService = NewAuthService();
+  await authService.ensureInitialized();
+  getIt.registerSingleton(authService);
+
+
+  // await AuthService.ensureInitialized();
   FirebaseService.ensureInitialized();
 
   // String link = "https://wgit.page.link/GUDU";
@@ -133,19 +142,22 @@ class MainPage extends StatefulWidget {
 class _MainPageState extends State<MainPage> {
   HouseHold? _currentHousehold;
   final GlobalKey<ScaffoldState> _key = GlobalKey();
+  final authService = getIt<NewAuthService>();
   List<HouseHold> _availableHouseholds = [];
 
   @override
   void initState() {
     super.initState();
 
-    AuthService.stateChange.listen((u) => setState(() {
-          if (u == null) {
-            _currentHousehold = null;
-          }
-        }));
+    authService.appUserStream.listen((AppUser? user) {
+      if(user == null){
+        setState(() {
+          _currentHousehold = null;
+        });
+      }
+    });
 
-    AuthService.onFirstSignIn(() {
+    authService.onFirstSignIn(() {
       if (widget.initialLink != null) {
         _handleDynLink(widget.initialLink!);
       }
@@ -170,6 +182,18 @@ class _MainPageState extends State<MainPage> {
       }
       setState(() {});
     });
+
+    getIt.get<NewAuthService>().appUserStream.listen((event) {
+      print("AUTHSTREAM EVENT");
+      print(event);
+      print("----");
+    });
+
+    getIt.get<NewAuthService>().appUserStream.listen((event) {
+      print("AUTHSTREAM EVENT 2");
+      print(event);
+      print("----");
+    });
   }
 
   void _openAddUserToHouseholdDialog(AppUser user) {
@@ -186,12 +210,12 @@ class _MainPageState extends State<MainPage> {
   void _handleDynLink(PendingDynamicLinkData dynLink) async {
     AppUser? dynUser = await FirebaseService.resolveDynLinkUser(dynLink);
     if (dynUser == null) return;
-    if (dynUser.uid == AuthService.appUser?.uid) return;
+    if (dynUser.uid == authService.currentUser?.uid) return;
     _openAddUserToHouseholdDialog(dynUser);
   }
 
   void _switchToHousehold(HouseHold household) {
-    print("Switching to $household");
+    // print("Switching to $household");
     ConfigService.currentHouseholdId = household.id;
     setState(() {
       _currentHousehold = household;
@@ -202,7 +226,7 @@ class _MainPageState extends State<MainPage> {
   void _signInTaped() async {
     _key.currentState!.openDrawer();
     await Future.delayed(const Duration(milliseconds: 500));
-    await AuthService.signInWithGoogle();
+    await authService.signInWithGoogle();
   }
 
   void _newActivityTaped() {
@@ -285,12 +309,12 @@ class _MainPageState extends State<MainPage> {
         title: _buildAppBarTitle(),
       ),
       body: Center(
-        child: AuthService.signedIn
+        child: authService.signedIn
             ? _buildCurrentHouseHoldViewOrInfo()
             : _buildNoHouseholdView(),
       ),
       floatingActionButton: Visibility(
-        visible: AuthService.signedIn,
+        visible: authService.signedIn,
         child: FloatingActionButton(
           onPressed: _newActivityTaped,
           tooltip: "Add Activity",

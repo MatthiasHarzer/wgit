@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:get_it/get_it.dart';
 import 'package:wgit/services/firebase/firebase_service.dart';
 
 import '../services/firebase/auth_service.dart';
 import '../util/components.dart';
+
+final getIt = GetIt.I;
 
 class AccountManageDialog extends StatefulWidget {
   const AccountManageDialog({Key? key}) : super(key: key);
@@ -13,6 +15,7 @@ class AccountManageDialog extends StatefulWidget {
 }
 
 class _AccountManageDialogState extends State<AccountManageDialog> {
+  final authService = getIt<NewAuthService>();
   bool working = false;
   String _displayName = "";
 
@@ -32,7 +35,7 @@ class _AccountManageDialogState extends State<AccountManageDialog> {
 
     if (confirm) {
       _close();
-      await AuthService.signOut();
+      await authService.signOut();
       // snackBarText = "Successfully signed out";
     }
 
@@ -49,7 +52,7 @@ class _AccountManageDialogState extends State<AccountManageDialog> {
     });
 
     if(_displayName.isNotEmpty){
-      await FirebaseService.modifyUser(uid: AuthService.appUser!.uid, displayName: _displayName);
+      await FirebaseService.modifyUser(uid: authService.currentUser!.uid, displayName: _displayName);
     }
 
     setState(() {
@@ -70,7 +73,7 @@ class _AccountManageDialogState extends State<AccountManageDialog> {
         mainAxisSize: MainAxisSize.min,
         children: [
           TextFormField(
-            initialValue: AuthService.appUser?.displayName,
+            initialValue: authService.currentUser?.displayName,
             onChanged: (text) => _displayName = text,
             keyboardType: TextInputType.text,
             decoration: const InputDecoration(

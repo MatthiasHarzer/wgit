@@ -50,6 +50,8 @@ dependencies:
   mobile_scanner: ^1.0.0
   http: ^0.13.5
   firebase_dynamic_links: ^4.3.9
+  get_it: ^7.2.0
+  rxdart: ^0.27.5
 
 dev_dependencies:
   flutter_test:

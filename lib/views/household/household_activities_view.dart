@@ -38,6 +38,8 @@ class _HouseHoldActivitiesViewState extends State<HouseHoldActivitiesView> {
   void dispose() {
     super.dispose();
 
+
+
     houseHold.unregisterStream(stream);
   }
 

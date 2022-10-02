@@ -1,13 +1,16 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
+import 'package:wgit/services/firebase/auth_service.dart';
 import 'package:wgit/services/firebase/firebase_service.dart';
 import 'package:wgit/services/types.dart';
 import 'package:wgit/views/qr_code_scan_view.dart';
 
-import '../../services/firebase/auth_service.dart';
 import '../../util/components.dart';
 import '../../util/util.dart';
 import '../add_user_to_household_view.dart';
+
+final getIt = GetIt.I;
 
 class ManageMembersView extends StatefulWidget {
   final HouseHold houseHold;
@@ -21,6 +24,7 @@ class ManageMembersView extends StatefulWidget {
 
 class _ManageMembersViewState extends State<ManageMembersView> {
   HouseHold get houseHold => widget.houseHold;
+  final authService = getIt<NewAuthService>();
 
   @override
   void initState() {
@@ -30,6 +34,12 @@ class _ManageMembersViewState extends State<ManageMembersView> {
     {
       if (mounted) {setState(() {})}
     });
+
+    // getIt.get<NewAuthService>().authStream.listen((event) {
+    //   print("AUTHSTREAM EVENT 3");
+    //   print(event);
+    //   print("----");
+    // });
   }
 
 
@@ -57,7 +67,7 @@ class _ManageMembersViewState extends State<ManageMembersView> {
     if (!success) {
       Util.showSnackBar(context,
           content: const Text("Invalid QR code provided"));
-    } else if (user == AuthService.appUser){
+    } else if (user == authService.currentUser){
       Util.showSnackBar(context,
           content: const Text("You can't add yourself to a household!"));
     }

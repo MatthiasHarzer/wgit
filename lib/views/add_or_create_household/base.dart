@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
 import 'package:wgit/services/firebase/auth_service.dart';
 import 'package:wgit/services/firebase/firebase_service.dart';
 import 'package:wgit/services/types.dart';
 
 import '../../util/components.dart';
+
+final getIt = GetIt.I;
 
 class JoinOrCreateHouseholdView extends StatefulWidget {
   final Function(HouseHold) onFinished;
@@ -18,6 +21,7 @@ class JoinOrCreateHouseholdView extends StatefulWidget {
 
 class _JoinOrCreateHouseholdViewState extends State<JoinOrCreateHouseholdView> {
   ThemeData get theme => Theme.of(context);
+  final authService = getIt<NewAuthService>();
 
   TextStyle get buttonStyle => TextStyle(
         color: theme.colorScheme.primary,
@@ -57,7 +61,7 @@ class _JoinOrCreateHouseholdViewState extends State<JoinOrCreateHouseholdView> {
       content: Align(
         alignment: Alignment.center,
         child: AsyncQrImageLoader(
-          contentLoader: AuthService.appUser!.getDynLink,
+          contentLoader: authService.currentUser!.getDynLink,
         ),
       ),
       actions: [

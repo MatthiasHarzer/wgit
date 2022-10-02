@@ -5,11 +5,15 @@ import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:collection/collection.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:get_it/get_it.dart';
 import 'package:wgit/services/firebase/auth_service.dart';
 import 'package:wgit/services/firebase/firebase_ref_service.dart';
 import 'package:wgit/services/firebase/firebase_service.dart';
 
 import '../util/util.dart';
+
+final getIt = GetIt.I;
+final authService = getIt<NewAuthService>();
 
 class Cache<E, T> {
   final Map<E, T> _cache = {};
@@ -192,7 +196,7 @@ class AppUser {
   String? dynLink;
   // AppUser get currentUser
 
-  bool get isSelf => uid == AuthService.appUser?.uid;
+  bool get isSelf => uid == authService.currentUser?.uid;
 
   Future<String> getDynLink() async {
     if(dynLink == null){
@@ -374,7 +378,7 @@ class HouseHold {
   final List<StreamController<List<Group>>> _groupsStreamControllers = [];
 
   // Iterable<String> get memberIds => members.map((m) => m.user.uid);
-  AppUser get thisUser => AuthService.appUser!;
+  AppUser get thisUser => authService.currentUser!;
 
   bool get thisUserIsAdmin => isUserAdmin(thisUser);
 

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
 import 'package:wgit/services/firebase/auth_service.dart';
 
-import '../services/firebase/firebase_service.dart';
 import '../services/types.dart';
-import '../util/components.dart';
 import 'account_manage_dialog.dart';
+
+final getIt = GetIt.I;
 
 class AccountWidget extends StatefulWidget {
   const AccountWidget({Key? key}) : super(key: key);
@@ -14,36 +15,32 @@ class AccountWidget extends StatefulWidget {
 }
 
 class _AccountWidgetState extends State<AccountWidget> {
-  bool working = false;
-  bool oldSignedIn = false;
+  final authService = getIt<NewAuthService>();
 
   @override
   void initState() {
     super.initState();
-    working = false;
 
     AppUser.onUpdated(() {
-      if(mounted){
-        setState(() {
-
-        });
-      }
-    });
-
-    AuthService.onWorkingUpdate((w) {
-      print("MOUNTED $mounted with working: $w");
-      if (mounted) {
-        setState(() {
-          working = w;
-        });
-      }
-    });
-
-    AuthService.stateChange.listen((e) {
       if (mounted) {
         setState(() {});
       }
     });
+
+    // AuthService.onWorkingUpdate((w) {
+    //   print("MOUNTED $mounted with working: $w");
+    //   if (mounted) {
+    //     setState(() {
+    //       working = w;
+    //     });
+    //   }
+    // });
+    //
+    // AuthService.stateChange.listen((e) {
+    //   if (mounted) {
+    //     setState(() {});
+    //   }
+    // });
   }
 
   void _manageAccountTapped() {
@@ -56,88 +53,119 @@ class _AccountWidgetState extends State<AccountWidget> {
   /// Generates the leading widget for the list tile
   Widget _buildLeading() {
     double size = 43;
-    Widget widget;
-    if (working) {
-      widget = const Padding(
-          padding: EdgeInsets.all(5), child: CircularProgressIndicator());
-    } else if (AuthService.signedIn) {
-      widget = CircleAvatar(
-        backgroundColor: Colors.grey[800],
-        radius: 45,
-        child: Padding(
-          padding: const EdgeInsets.all(2.0),
-          child: ClipOval(
-              child: Image.network(
-            FirebaseService.user!.photoURL,
-          )),
-        ),
-      );
-    } else {
-      widget = Icon(
-        Icons.account_circle_outlined,
-        size: size,
-      );
-    }
     return SizedBox.square(
       dimension: size,
-      child: widget,
+      child: StreamBuilder(
+        stream: authService.authStateStream,
+        builder: (context, snapshot) {
+          final state = snapshot.data ?? AuthState.signedOut;
+          final user = authService.currentUser;
+          switch (state) {
+            case AuthState.signedIn:
+            case AuthState.signedOut:
+              return user == null
+                  ? Icon(
+                Icons.account_circle_outlined,
+                size: size,
+              )
+                  : CircleAvatar(
+                backgroundColor: Colors.grey[800],
+                radius: 45,
+                child: Padding(
+                  padding: const EdgeInsets.all(2.0),
+                  child: ClipOval(
+                    child: Image.network(
+                      user.photoURL,
+                    ),
+                  ),
+                ),
+              );
+            case AuthState.signingIn:
+            case AuthState.signingOut:
+              return const Padding(
+                  padding: EdgeInsets.all(5), child: CircularProgressIndicator());
+          }
+        },
+      ),
     );
   }
 
   /// Generates the trailing widget (manage button if signed in)
-  Widget _buildTrailing() {
-    if (!AuthService.signedIn) {
-      return const SizedBox.square(
-        dimension: 1,
-      );
-    } else {
-      return TextButton(
-        onPressed: _manageAccountTapped,
-        child: const Text("MANAGE"),
-      );
-    }
-  }
+  // Widget _buildTrailing() {
+  //   if (!AuthService.signedIn) {
+  //     return const SizedBox.square(
+  //       dimension: 1,
+  //     );
+  //   } else {
+  //     return TextButton(
+  //       onPressed: _manageAccountTapped,
+  //       child: const Text("MANAGE"),
+  //     );
+  //   }
+  // }
 
   /// Generates the title for the list tile
   Widget _buildTitle() {
-    String text;
-    if (working) {
-      text = "Working on it";
-    } else if (AuthService.signedIn) {
-      text = FirebaseService.user!.displayName;
-    } else {
-      text = "Not Signed In";
-    }
-    return Text(
-      text,
-      softWrap: true,
-      overflow: TextOverflow.ellipsis,
-      style: const TextStyle(fontSize: 18),
+    return StreamBuilder(
+      stream: authService.authStateStream,
+      builder: (context, snapshot) {
+        String text;
+        switch (snapshot.data) {
+          case AuthState.signedIn:
+            text = authService.currentUser?.displayName ?? "";
+            break;
+          case AuthState.signedOut:
+            text = "Not Signed Im";
+            break;
+          case AuthState.signingIn:
+          case AuthState.signingOut:
+            text = "Working on it";
+            break;
+          default:
+            text = "An unexpected error occurred";
+        }
+
+        return Text(
+          text,
+          softWrap: true,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontSize: 18),
+        );
+      },
     );
   }
 
   /// Generates the subtitle for the list tile
   Widget _buildSubtitle() {
-    String text;
-    if (working) {
-      if (oldSignedIn) {
-        text = "Signing you out...";
-      } else {
-        text = "Signing you in...";
-      }
-    } else if (AuthService.signedIn) {
-      text = "Tap to manage account";
-    } else {
-      text = "Tap to sign in";
-    }
-    return Text(text);
+    return StreamBuilder(
+      stream: authService.authStateStream,
+      builder: (context, snapshot) {
+        String text;
+        switch (snapshot.data) {
+          case AuthState.signedIn:
+            text = "Tap to manage account";
+            break;
+          case AuthState.signedOut:
+            text = "Tap to sign in";
+            break;
+          case AuthState.signingIn:
+            text = "Signing you in...";
+            break;
+          case AuthState.signingOut:
+            text = "Signing you out...";
+            break;
+          default:
+            text = "Unexpected Auth State";
+        }
+        return Text(text);
+      },
+    );
   }
 
   /// Signes the user in or out, depending on current state
   void _handleTap() async {
     String snackBarText;
-    oldSignedIn = AuthService.signedIn;
-    if (AuthService.signedIn) {
+    if (authService.signedIn) {
       // var dialog = ConfirmDialog(
       //     context: context,
       //     title: "Are you sure you want to sign out?",
@@ -151,7 +179,7 @@ class _AccountWidgetState extends State<AccountWidget> {
       // }
       _manageAccountTapped();
     } else {
-      bool success = await AuthService.signInWithGoogle();
+      bool success = await authService.signInWithGoogle();
     }
 
     if (!mounted) return;
@@ -168,7 +196,7 @@ class _AccountWidgetState extends State<AccountWidget> {
       subtitle: _buildSubtitle(),
       leading: _buildLeading(),
       // trailing: _buildTrailing(),
-      onTap: working ? null : _handleTap,
+      onTap: _handleTap,
     );
   }
 }

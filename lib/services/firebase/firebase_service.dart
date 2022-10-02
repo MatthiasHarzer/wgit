@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
+import 'package:get_it/get_it.dart';
 import 'package:wgit/secrets.dart';
 import 'package:wgit/util/consts.dart';
 
@@ -11,12 +12,15 @@ import '../types.dart';
 import 'auth_service.dart';
 import 'firebase_ref_service.dart';
 
+final getIt = GetIt.I;
+final authService = getIt<NewAuthService>();
+
 /// Dart interface to communicate with the firebase platform
 class FirebaseService {
   static FirebaseFirestore get _firestore => FirebaseFirestore.instance;
   static bool _initialized = false;
 
-  static AppUser? get user => AuthService.appUser;
+  static AppUser? get user => authService.currentUser;
 
   static bool get signedIn => user != null;
 
@@ -36,7 +40,7 @@ class FirebaseService {
   static Stream<List<HouseHold>> get availableHouseholds {
     StreamController<List<HouseHold>> controller = StreamController();
 
-    AuthService.stateChange.listen((user) {
+    authService.appUserStream.listen((user) {
       if (user == null) {
         controller.add([]);
       } else {
@@ -323,24 +327,24 @@ class FirebaseService {
   static void ensureInitialized() {
     if (_initialized) return;
 
-    AuthService.stateChange.listen((user) {
-      print(
-        "USER IS signed in;: ${user?.displayName}",
-      );
-      if (user != null) {
-        print("STARING STREAM LISTENING");
-        availableHouseholds.listen((hoseholds) {
-          print("----");
-          print("HOUSEHOLD_UPDATE");
-          for (var h in hoseholds) {
-            print(h.name);
-          }
-          print("----");
-        });
-      }
-    });
+    // AuthService.stateChange.listen((user) {
+    //   print(
+    //     "USER IS signed in;: ${user?.displayName}",
+    //   );
+    //   if (user != null) {
+    //     print("STARING STREAM LISTENING");
+    //     availableHouseholds.listen((hoseholds) {
+    //       print("----");
+    //       print("HOUSEHOLD_UPDATE");
+    //       for (var h in hoseholds) {
+    //         print(h.name);
+    //       }
+    //       print("----");
+    //     });
+    //   }
+    // });
 
-    AuthService.stateChange.listen((User? user) async {
+    authService.appUserStream.listen((AppUser? user) async {
       if (user != null) {
         /// The user is signed in
 
@@ -351,7 +355,7 @@ class FirebaseService {
           /// Create the user in the db, if it does not exist already
           await RefService.currentUserRef!.set({
             "displayName": user.displayName,
-            "email": user.email,
+            // "email": user.email,
             "photoURL": user.photoURL,
             "uid": user.uid,
           });
