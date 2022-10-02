@@ -22,6 +22,7 @@ class JoinOrCreateHouseholdView extends StatefulWidget {
 class _JoinOrCreateHouseholdViewState extends State<JoinOrCreateHouseholdView> {
   ThemeData get theme => Theme.of(context);
   final authService = getIt<NewAuthService>();
+  final firebaseService = getIt<FirebaseService>();
 
   TextStyle get buttonStyle => TextStyle(
         color: theme.colorScheme.primary,
@@ -30,7 +31,7 @@ class _JoinOrCreateHouseholdViewState extends State<JoinOrCreateHouseholdView> {
 
   void _onCreateConfirm(String name) async {
     if (name.isEmpty) return;
-    HouseHold? household = await FirebaseService.createHousehold(name);
+    HouseHold? household = await firebaseService.createHousehold(name);
     if (household != null) {
       if (mounted) {
         Navigator.pop(context);

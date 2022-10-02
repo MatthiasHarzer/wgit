@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
 import 'package:wgit/services/firebase/firebase_service.dart';
 
 import '../services/types.dart';
 import '../util/components.dart';
 import '../util/util.dart';
 import '../views/household/manage_members_view.dart';
+
+final getIt = GetIt.I;
 
 class DrawerCurrentHouseHoldActions extends StatefulWidget {
   final HouseHold houseHold;
@@ -22,6 +25,7 @@ class DrawerCurrentHouseHoldActions extends StatefulWidget {
 class _DrawerCurrentHouseHoldActionsState
     extends State<DrawerCurrentHouseHoldActions> {
   HouseHold get houseHold => widget.houseHold;
+  final firebaseService = getIt<FirebaseService>();
   bool working = false;
 
   void _leaveHouseholdTapped() async {
@@ -64,7 +68,7 @@ class _DrawerCurrentHouseHoldActionsState
         bool confirm = await dialog.future;
 
         if(confirm){
-          await FirebaseService.leaveHousehold(houseHold);
+          await firebaseService.leaveHousehold(houseHold);
         }
       }
     }else{
@@ -77,7 +81,7 @@ class _DrawerCurrentHouseHoldActionsState
               bool confirm = await dialog.future;
 
               if(confirm){
-                await FirebaseService.deleteHouseHold(houseHold);
+                await firebaseService.deleteHouseHold(houseHold);
               }
       // return;
     }

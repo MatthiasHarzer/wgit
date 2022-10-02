@@ -28,12 +28,18 @@ void main() async {
   await ConfigService.ensureInitialized();
 
   final authService = NewAuthService();
-  await authService.ensureInitialized();
   getIt.registerSingleton(authService);
+
+  final firebaseService = FirebaseService();
+  getIt.registerSingleton(firebaseService);
+
+  await authService.ensureInitialized();
+  await firebaseService.ensureInitialized();
+
 
 
   // await AuthService.ensureInitialized();
-  FirebaseService.ensureInitialized();
+
 
   // String link = "https://wgit.page.link/GUDU";
   // String link = "https://wgit.page.link/k29C";
@@ -143,6 +149,7 @@ class _MainPageState extends State<MainPage> {
   HouseHold? _currentHousehold;
   final GlobalKey<ScaffoldState> _key = GlobalKey();
   final authService = getIt<NewAuthService>();
+  final firebaseService = getIt<FirebaseService>();
   List<HouseHold> _availableHouseholds = [];
 
   @override
@@ -163,7 +170,7 @@ class _MainPageState extends State<MainPage> {
       }
     });
 
-    FirebaseService.availableHouseholds.listen((households) {
+    firebaseService.availableHouseholds.listen((households) {
       _availableHouseholds = households;
       if (_currentHousehold == null && households.isNotEmpty) {
         var resolved = households.where(
@@ -208,7 +215,7 @@ class _MainPageState extends State<MainPage> {
   }
 
   void _handleDynLink(PendingDynamicLinkData dynLink) async {
-    AppUser? dynUser = await FirebaseService.resolveDynLinkUser(dynLink);
+    AppUser? dynUser = await firebaseService.resolveDynLinkUser(dynLink);
     if (dynUser == null) return;
     if (dynUser.uid == authService.currentUser?.uid) return;
     _openAddUserToHouseholdDialog(dynUser);

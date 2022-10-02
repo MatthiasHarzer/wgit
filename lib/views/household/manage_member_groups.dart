@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
 import 'package:wgit/services/firebase/firebase_service.dart';
 import 'package:wgit/util/components.dart';
 
 import '../../services/types.dart';
+
+final getIt = GetIt.I;
 
 class _CreateOrEditGroupDialog extends StatefulWidget {
   final bool isEdit;
@@ -18,6 +21,7 @@ class _CreateOrEditGroupDialog extends StatefulWidget {
 }
 
 class _CreateOrEditGroupDialogState extends State<_CreateOrEditGroupDialog> {
+  final firebaseService = getIt<FirebaseService>();
   late Group group;
 
   ThemeData get theme => Theme.of(context);
@@ -52,7 +56,7 @@ class _CreateOrEditGroupDialogState extends State<_CreateOrEditGroupDialog> {
 
     String? id = group.id.isEmpty ? null : group.id;
 
-    await FirebaseService.createGroup(
+    await firebaseService.createGroup(
         houseHoldId: houseHold.id,
         name: name,
         members: group.members,
@@ -77,7 +81,7 @@ class _CreateOrEditGroupDialogState extends State<_CreateOrEditGroupDialog> {
       final confirm = await dialog.future;
 
       if(confirm){
-        await FirebaseService.deleteGroup(houseHoldId: houseHold.id, groupId: group.id);
+        await firebaseService.deleteGroup(houseHoldId: houseHold.id, groupId: group.id);
         _close();
       }
 

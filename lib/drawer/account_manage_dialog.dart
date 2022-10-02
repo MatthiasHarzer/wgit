@@ -16,6 +16,7 @@ class AccountManageDialog extends StatefulWidget {
 
 class _AccountManageDialogState extends State<AccountManageDialog> {
   final authService = getIt<NewAuthService>();
+  final firebaseService = getIt<FirebaseService>();
   bool working = false;
   String _displayName = "";
 
@@ -52,7 +53,7 @@ class _AccountManageDialogState extends State<AccountManageDialog> {
     });
 
     if(_displayName.isNotEmpty){
-      await FirebaseService.modifyUser(uid: authService.currentUser!.uid, displayName: _displayName);
+      await firebaseService.modifyUser(uid: authService.currentUser!.uid, displayName: _displayName);
     }
 
     setState(() {

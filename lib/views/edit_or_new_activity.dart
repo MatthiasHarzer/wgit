@@ -1,10 +1,13 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
 import 'package:wgit/services/firebase/firebase_service.dart';
 
 import '../services/types.dart';
 import '../util/components.dart';
 import '../util/util.dart';
+
+final getIt = GetIt.I;
 
 class EditOrNewActivity extends StatefulWidget {
   final HouseHold houseHold;
@@ -20,6 +23,7 @@ class EditOrNewActivity extends StatefulWidget {
 
 class _EditOrNewActivityState extends State<EditOrNewActivity> {
   HouseHold get houseHold => widget.houseHold;
+  final firebaseService = getIt<FirebaseService>();
 
   List<AppUser> get availableUsers => <AppUser>{
         ...selectedGroup.members.where((m) => houseHold.isUserActive(m)),
@@ -85,7 +89,7 @@ class _EditOrNewActivityState extends State<EditOrNewActivity> {
       }
     }
 
-    await FirebaseService.submitActivity(
+    await firebaseService.submitActivity(
         houseHold: houseHold, activity: tempActivity);
 
     if (mounted) {

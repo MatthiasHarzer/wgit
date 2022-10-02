@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
 import 'package:wgit/services/firebase/firebase_service.dart';
 import 'package:wgit/services/types.dart';
 import 'package:wgit/views/add_or_create_household/base.dart';
 
 import '../theme.dart';
 import '../util/util.dart';
+
+final getIt = GetIt.I;
 
 class HouseholdsWidget extends StatefulWidget {
   final Function(HouseHold) onSwitchTo;
@@ -17,6 +20,7 @@ class HouseholdsWidget extends StatefulWidget {
 }
 
 class _HouseholdsWidgetState extends State<HouseholdsWidget> {
+  final firebaseService = getIt<FirebaseService>();
   final TextStyle itemTextStyle = AppTheme.drawerText.copyWith(fontSize: 17);
 
   /// Closes the drawer and calls the callback for switching households
@@ -53,14 +57,10 @@ class _HouseholdsWidgetState extends State<HouseholdsWidget> {
     );
   }
 
-  /// Build all available households from the [FirebaseService.availableHouseholds] stream
+  /// Build all available households from the [firebaseService.availableHouseholds] stream
   Widget _buildHouseholds() {
-    FirebaseService.availableHouseholds.listen((event) {
-      // print("STREAM BUILDER:");
-      // print(event.length);
-    });
     return StreamBuilder(
-      stream: FirebaseService.availableHouseholds,
+      stream: firebaseService.availableHouseholds,
       builder: (context, snapshot) {
         return Column(
           children: [

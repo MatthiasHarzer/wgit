@@ -1,10 +1,15 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
 import 'package:wgit/util/components.dart';
 
 import '../services/firebase/firebase_service.dart';
 import '../services/types.dart';
 import '../util/util.dart';
 import 'add_or_create_household/base.dart';
+
+final getIt = GetIt.I;
 
 class AddUserToHouseholdView extends StatefulWidget {
   final AppUser user;
@@ -20,6 +25,8 @@ class AddUserToHouseholdView extends StatefulWidget {
 
 class _AddUserToHouseholdViewState extends State<AddUserToHouseholdView> {
   List<HouseHold> availableHouseholds = [];
+  final firebaseService = getIt<FirebaseService>();
+  late final StreamSubscription _sub;
 
   bool get isEligible => availableHouseholds.isNotEmpty;
 
@@ -32,7 +39,7 @@ class _AddUserToHouseholdViewState extends State<AddUserToHouseholdView> {
 
     selectedHousehold = widget.initialHousehold;
 
-    FirebaseService.availableHouseholds.listen((houseHolds) {
+    _sub = firebaseService.availableHouseholds.listen((houseHolds) {
       if (mounted) {
         setState(() {
           availableHouseholds =
@@ -42,13 +49,20 @@ class _AddUserToHouseholdViewState extends State<AddUserToHouseholdView> {
     });
   }
 
+  @override
+  void dispose(){
+    super.dispose();
+
+    _sub.cancel();
+  }
+
   void _add() async {
     if (selectedHousehold == null || working) return;
     setState(() {
       working = true;
     });
 
-    await FirebaseService.addMember(selectedHousehold!, widget.user);
+    await firebaseService.addMember(selectedHousehold!, widget.user);
 
     if (mounted) {
       setState(() {

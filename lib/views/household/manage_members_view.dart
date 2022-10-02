@@ -25,6 +25,7 @@ class ManageMembersView extends StatefulWidget {
 class _ManageMembersViewState extends State<ManageMembersView> {
   HouseHold get houseHold => widget.houseHold;
   final authService = getIt<NewAuthService>();
+  final firebaseService = getIt<FirebaseService>();
 
   @override
   void initState() {
@@ -48,7 +49,7 @@ class _ManageMembersViewState extends State<ManageMembersView> {
     // if(kIsWeb) return
     Future<AppUser?> resolve2(String uri) async {
       try {
-        AppUser? dynUser = await FirebaseService.resolveShortDynLinkUser(uri);
+        AppUser? dynUser = await firebaseService.resolveShortDynLinkUser(uri);
         if (dynUser == null) return null;
         // if (dynUser.uid == AuthService.appUser?.uid) return null;
         return dynUser;
@@ -116,7 +117,7 @@ class _ManageMembersViewState extends State<ManageMembersView> {
     bool confirm = await dialog.future;
 
     if (confirm) {
-      await FirebaseService.promoteMember(houseHold, member);
+      await firebaseService.promoteMember(houseHold, member);
     }
   }
 
@@ -131,7 +132,7 @@ class _ManageMembersViewState extends State<ManageMembersView> {
     bool confirm = await dialog.future;
 
     if (confirm) {
-      await FirebaseService.removeMember(houseHold, member);
+      await firebaseService.removeMember(houseHold, member);
     }
   }
 

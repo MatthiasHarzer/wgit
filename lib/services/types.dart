@@ -14,6 +14,7 @@ import '../util/util.dart';
 
 final getIt = GetIt.I;
 final authService = getIt<NewAuthService>();
+final firebaseService = getIt<FirebaseService>();
 
 class Cache<E, T> {
   final Map<E, T> _cache = {};
@@ -200,8 +201,8 @@ class AppUser {
 
   Future<String> getDynLink() async {
     if(dynLink == null){
-      dynLink = await FirebaseService.createDynamicLinkFor(user: this);
-      await FirebaseService.modifyUser(uid: uid, dynLink: dynLink);
+      dynLink = await firebaseService.createDynamicLinkFor(user: this);
+      await firebaseService.modifyUser(uid: uid, dynLink: dynLink);
     }
     return dynLink!;
   }
@@ -487,7 +488,7 @@ class HouseHold {
 
       if (!groups.map((g) => g.id).contains("all")) {
         var df = Group.createDefault(houseHold: this);
-        FirebaseService.createGroup(
+        await firebaseService.createGroup(
             houseHoldId: id,
             name: df.name,
             members: df.members,
@@ -607,9 +608,9 @@ class HouseHold {
     toMemberData.totalPaid -= amount;
 
     await Future.wait([
-      FirebaseService.updateMemberData(
+      firebaseService.updateMemberData(
           houseHold: this, memberData: fromMemberData),
-      FirebaseService.updateMemberData(
+      firebaseService.updateMemberData(
           houseHold: this, memberData: toMemberData)
     ]);
   }

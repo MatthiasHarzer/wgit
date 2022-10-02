@@ -14,8 +14,8 @@ class RefService {
       appRef.collection("households");
 
   /// The reference of the currently logged in user
-  static DocumentReference? get currentUserRef =>
-      FirebaseService.signedIn ? usersRef.doc(FirebaseService.user?.uid) : null;
+  // static DocumentReference? get currentUserRef =>
+  //     FirebaseService.signedIn ? usersRef.doc(FirebaseService.user?.uid) : null;
 
   /// Gets a reference of the given type. If more than one type (user/household) is give, this methods can produced unexpected bahaviour
   static DocumentReference refOf({String? uid, String? houseHoldId}) {
