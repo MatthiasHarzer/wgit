@@ -1,4 +1,3 @@
-import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:wgit/services/firebase/firebase_service.dart';
@@ -27,50 +26,63 @@ class _ManageMembersViewState extends State<ManageMembersView> {
   void initState() {
     super.initState();
 
-    houseHold.onChange(() => {
-          if (mounted) {setState(() {})}
-        });
+    houseHold.onChange(() =>
+    {
+      if (mounted) {setState(() {})}
+    });
   }
 
-  void _openAddUserToHouseholdDialog(AppUser user) {
+
+  /// Tries
+  void _resolveScannedUri(String uri) async {
+    // if(kIsWeb) return
+    Future<AppUser?> resolve2(String uri) async {
+      try {
+        AppUser? dynUser = await FirebaseService.resolveShortDynLinkUser(uri);
+        if (dynUser == null) return null;
+        // if (dynUser.uid == AuthService.appUser?.uid) return null;
+        return dynUser;
+      } catch (e) {
+        print(e);
+        return null;
+      }
+    }
+
+
+    AppUser? user = await resolve2(uri);
+    bool success = user != null;
+
+    if (!mounted) return;
+
+    if (!success) {
+      Util.showSnackBar(context,
+          content: const Text("Invalid QR code provided"));
+    } else if (user == AuthService.appUser){
+      Util.showSnackBar(context,
+          content: const Text("You can't add yourself to a household!"));
+    }
+
+    if(!success) return;
+
     Navigator.push(
       context,
       Util.createScaffoldRoute(
         view: AddUserToHouseholdView(
           user: user,
+          initialHousehold: houseHold,
         ),
       ),
     );
   }
 
-  void _resolveScannedUri(String uri) async {
-    if(kIsWeb) return;
-    Future<bool> resolve(String uri) async {
-      final PendingDynamicLinkData? dynLink =
-          await FirebaseDynamicLinks.instance.getDynamicLink(Uri.parse(uri));
-      if (dynLink == null) return false;
-      AppUser? dynUser = await FirebaseService.resolveDynLinkUser(dynLink);
-      if (dynUser == null) return false;
-      if (dynUser.uid == AuthService.appUser?.uid) return false;
-      _openAddUserToHouseholdDialog(dynUser);
-      return true;
-    }
-
-    bool success = await resolve(uri);
-
-    if (!success && mounted) {
-      Util.showSnackBar(context,
-          content: const Text("Invalid QR code provided"));
-    }
-  }
-
   void _openQrCodeScanner() async {
-    if (kIsWeb) {
+    if (kIsWeb && false) {
       var dialog = UserInfoDialog(
         context: context,
         title: "This operation is currently not supported on the web version!",
         subtitle: "You can use the mobile app to add members.",
-      )..show();
+      )
+        ..show();
       await dialog.future;
     } else {
       Navigator.push(

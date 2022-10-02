@@ -8,8 +8,10 @@ import 'add_or_create_household/base.dart';
 
 class AddUserToHouseholdView extends StatefulWidget {
   final AppUser user;
+  final HouseHold? initialHousehold;
 
-  const AddUserToHouseholdView({required this.user, Key? key})
+  const AddUserToHouseholdView(
+      {required this.user, this.initialHousehold, Key? key})
       : super(key: key);
 
   @override
@@ -28,13 +30,15 @@ class _AddUserToHouseholdViewState extends State<AddUserToHouseholdView> {
   void initState() {
     super.initState();
 
-    // AppUser me =
+    selectedHousehold = widget.initialHousehold;
 
     FirebaseService.availableHouseholds.listen((houseHolds) {
-      setState(() {
-        availableHouseholds =
-            houseHolds.where((h) => h.thisUserIsAdmin).toList();
-      });
+      if (mounted) {
+        setState(() {
+          availableHouseholds =
+              houseHolds.where((h) => h.thisUserIsAdmin).toList();
+        });
+      }
     });
   }
 

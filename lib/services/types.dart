@@ -1,9 +1,9 @@
 // ignore_for_file: constant_identifier_names, avoid_function_literals_in_foreach_calls
-import 'package:collection/collection.dart';
 import 'dart:async';
 import 'dart:ui';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:collection/collection.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:wgit/services/firebase/auth_service.dart';
 import 'package:wgit/services/firebase/firebase_ref_service.dart';
@@ -190,13 +190,16 @@ class AppUser {
   late String displayName;
   late String photoURL;
   String? dynLink;
+  // AppUser get currentUser
 
   bool get isSelf => uid == AuthService.appUser?.uid;
 
   Future<String> getDynLink() async {
-    if (dynLink != null) return dynLink!;
-
-    return FirebaseService.createDynamicLinkFor(user: this);
+    if(dynLink == null){
+      dynLink = await FirebaseService.createDynamicLinkFor(user: this);
+      await FirebaseService.modifyUser(uid: uid, dynLink: dynLink);
+    }
+    return dynLink!;
   }
 
   AppUser._(
@@ -217,15 +220,20 @@ class AppUser {
   bool _modifyWith({required Map<String, dynamic> data}){
     var dn = data["displayName"] ?? displayName;
     var pu = data["photoURL"] ?? photoURL;
+    var dl = data["dynLink"] ?? dynLink;
     // var dl = data["dynLink"] ?? dynLink;
     bool updated = dn != displayName;
     updated |= pu != photoURL;
+    updated |= dl != dynLink;
 
     displayName = dn;
     photoURL = pu;
+    dynLink = dl;
 
     return updated;
   }
+
+
 
   static AppUser _getCachedOrCreate(
       {required String uid,
@@ -296,6 +304,7 @@ class AppUser {
   static void _callOnUpdate(){
     _onUsersUpdated.forEach((cb)=>cb());
   }
+
 
   @override
   String toString() {
@@ -599,6 +608,10 @@ class HouseHold {
       FirebaseService.updateMemberData(
           houseHold: this, memberData: toMemberData)
     ]);
+  }
+
+  static void clearCached(){
+    _CACHE.clear();
   }
 
   @override

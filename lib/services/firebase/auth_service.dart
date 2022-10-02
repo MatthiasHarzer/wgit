@@ -52,6 +52,7 @@ class AuthService {
         }
       } else {
         appUser = null;
+        HouseHold.clearCached();
       }
     });
   }

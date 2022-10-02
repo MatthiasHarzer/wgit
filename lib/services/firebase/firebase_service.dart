@@ -86,6 +86,7 @@ class FirebaseService {
     //     .update({"admins": admins.map((a) => a.uid).toList()});
   }
 
+  /// Deletes the household, including all sub collections
   static Future deleteHouseHold(HouseHold houseHold)async{
 
     var activities = await RefService.refOfActivities(houseHoldId: houseHold.id).get();
@@ -246,13 +247,15 @@ class FirebaseService {
   }
 
   static Future<String> createDynamicLinkFor({required AppUser user}) async {
-    final apiUrl = "$API_ENDPOINT/firebase/getdynamiclink?key=$TAPTWICE_FIREBSE_API_KEY&user_id=${user.uid}";
+    final apiUrl = "$CREATE_DYN_LINK_ENPOINT?key=$TAPTWICE_FIREBSE_API_KEY&user_id=${user.uid}";
     final data = await Util.makeRequest(url: apiUrl);
     final link = data["link"];
 
     if(link == null){
       throw Exception("Failed to generate dynamic link from response: $data");
     }
+
+    // await modifyUser(uid: user.uid, dynLink: link);
 
     return link;
 
@@ -278,15 +281,26 @@ class FirebaseService {
     String? uid = uri.queryParameters["user"];
 
     if(uid == null) return null;
-    
+
     AppUser? user = await AppUser.fromUid(uid);
     if(user == null) return null;
 
     return user;
   }
 
+  static Future<AppUser?> resolveShortDynLinkUser(String shortDynLink) async {
+    final apiUrl = "$GET_USER_BY_DYN_LINK_ENPOINT?key=$TAPTWICE_FIREBSE_API_KEY&link=$shortDynLink";
+    // print(apiUrl);
+    final data = await Util.makeRequest(url: apiUrl);
+    final uid = data["user_id"];
+
+    if(uid == null) return null;
+
+    return await AppUser.fromUid(uid);
+  }
+
   /// Modifies a users [displayName] and/or [photoURL]
-  static Future modifyUser({required String uid, String? displayName, String? photoURL})async{
+  static Future modifyUser({required String uid, String? displayName, String? photoURL, String? dynLink})async{
     Map<String, dynamic> updateData = {};
 
     if(displayName != null){
@@ -294,6 +308,9 @@ class FirebaseService {
     }
     if(photoURL != null){
       updateData["photoURL"] = photoURL;
+    }
+    if(dynLink != null){
+      updateData["dynLink"] = dynLink;
     }
 
     if(updateData.keys.isEmpty) return;
