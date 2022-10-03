@@ -21,7 +21,7 @@ class JoinOrCreateHouseholdView extends StatefulWidget {
 
 class _JoinOrCreateHouseholdViewState extends State<JoinOrCreateHouseholdView> {
   ThemeData get theme => Theme.of(context);
-  final authService = getIt<NewAuthService>();
+  final authService = getIt<AuthService>();
   final firebaseService = getIt<FirebaseService>();
 
   TextStyle get buttonStyle => TextStyle(

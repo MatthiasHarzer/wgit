@@ -15,7 +15,7 @@ class AccountManageDialog extends StatefulWidget {
 }
 
 class _AccountManageDialogState extends State<AccountManageDialog> {
-  final authService = getIt<NewAuthService>();
+  final authService = getIt<AuthService>();
   final firebaseService = getIt<FirebaseService>();
   bool working = false;
   String _displayName = "";

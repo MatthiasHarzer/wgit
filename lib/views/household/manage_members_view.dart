@@ -24,7 +24,7 @@ class ManageMembersView extends StatefulWidget {
 
 class _ManageMembersViewState extends State<ManageMembersView> {
   HouseHold get houseHold => widget.houseHold;
-  final authService = getIt<NewAuthService>();
+  final authService = getIt<AuthService>();
   final firebaseService = getIt<FirebaseService>();
 
   @override

@@ -27,7 +27,7 @@ void main() async {
   );
   await ConfigService.ensureInitialized();
 
-  final authService = NewAuthService();
+  final authService = AuthService();
   getIt.registerSingleton(authService);
 
   final firebaseService = FirebaseService();
@@ -148,7 +148,7 @@ class MainPage extends StatefulWidget {
 class _MainPageState extends State<MainPage> {
   HouseHold? _currentHousehold;
   final GlobalKey<ScaffoldState> _key = GlobalKey();
-  final authService = getIt<NewAuthService>();
+  final authService = getIt<AuthService>();
   final firebaseService = getIt<FirebaseService>();
   List<HouseHold> _availableHouseholds = [];
 
@@ -190,13 +190,13 @@ class _MainPageState extends State<MainPage> {
       setState(() {});
     });
 
-    getIt.get<NewAuthService>().appUserStream.listen((event) {
+    getIt.get<AuthService>().appUserStream.listen((event) {
       print("AUTHSTREAM EVENT");
       print(event);
       print("----");
     });
 
-    getIt.get<NewAuthService>().appUserStream.listen((event) {
+    getIt.get<AuthService>().appUserStream.listen((event) {
       print("AUTHSTREAM EVENT 2");
       print(event);
       print("----");

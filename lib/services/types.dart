@@ -10,7 +10,7 @@ import 'package:wgit/services/firebase/firebase_ref_service.dart';
 import 'package:wgit/services/firebase/firebase_service.dart';
 
 final getIt = GetIt.I;
-final authService = getIt<NewAuthService>();
+final authService = getIt<AuthService>();
 final firebaseService = getIt<FirebaseService>();
 
 /// An activity is an expense shared by multiple [AppUsers]
@@ -399,6 +399,8 @@ class HouseHold {
 
     /// Activities stream
     _subs.add(RefService.refOfActivities(houseHoldId: id)
+        .limit(50)
+        .orderBy("timestamp", descending: true)
         .snapshots()
         .listen((snapshot) async {
       _activities.add(await Future.wait(
@@ -478,6 +480,17 @@ class HouseHold {
     ]);
   }
 
+  Future cancelAll() async {
+    List<Future> futures = [
+      ..._subs.map((s)=>s.cancel()),
+      _memberData.close(),
+      _activities.close(),
+      _groups.close(),
+      _members.close(),
+    ];
+    await Future.wait(futures);
+  }
+
   static final Map<String, HouseHold> _cache = {};
 
   // static Stream<List<HouseHold2>> get availableHouseholdsStream => _availableHouseholds.stream;
@@ -503,6 +516,14 @@ class HouseHold {
 
   static HouseHold? tryGetCached(String id) {
     return _cache[id];
+  }
+
+  static Future clearAll()async{
+    for(var cached in _cache.values){
+     await  cached.cancelAll();
+    }
+    _cache.clear();
+
   }
 
   @override

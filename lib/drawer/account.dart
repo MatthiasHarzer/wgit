@@ -14,7 +14,7 @@ class AccountWidget extends StatefulWidget {
 }
 
 class _AccountWidgetState extends State<AccountWidget> {
-  final authService = getIt<NewAuthService>();
+  final authService = getIt<AuthService>();
 
   @override
   void initState() {

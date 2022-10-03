@@ -24,7 +24,7 @@ class MainPageDrawer extends StatefulWidget {
 }
 
 class _MainPageDrawerState extends State<MainPageDrawer> {
-  final authService = getIt<NewAuthService>();
+  final authService = getIt<AuthService>();
   final TextStyle headerTextStyle = TextStyle(
     color: Colors.grey[300],
     fontWeight: FontWeight.w500,

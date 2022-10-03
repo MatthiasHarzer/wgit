@@ -13,7 +13,7 @@ import 'auth_service.dart';
 import 'firebase_ref_service.dart';
 
 final getIt = GetIt.I;
-final authService = getIt<NewAuthService>();
+final authService = getIt<AuthService>();
 
 /// Dart interface to communicate with the firebase platform
 class FirebaseService {
