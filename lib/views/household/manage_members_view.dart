@@ -71,6 +71,7 @@ class _ManageMembersViewState extends State<ManageMembersView> {
     } else if (user == authService.currentUser){
       Util.showSnackBar(context,
           content: const Text("You can't add yourself to a household!"));
+      return;
     }
 
     if(!success) return;
@@ -87,23 +88,13 @@ class _ManageMembersViewState extends State<ManageMembersView> {
   }
 
   void _openQrCodeScanner() async {
-    if (kIsWeb && false) {
-      var dialog = UserInfoDialog(
-        context: context,
-        title: "This operation is currently not supported on the web version!",
-        subtitle: "You can use the mobile app to add members.",
-      )
-        ..show();
-      await dialog.future;
-    } else {
-      Navigator.push(
-        context,
-        Util.createScaffoldRoute(
-          view: QrCodeScanView(
-              onRead: _resolveScannedUri, title: "Scan a users QR code"),
-        ),
-      );
-    }
+    Navigator.push(
+      context,
+      Util.createScaffoldRoute(
+        view: QrCodeScanView(
+            onRead: _resolveScannedUri, title: "Scan a users QR code"),
+      ),
+    );
   }
 
   /// Prompts the user to confirm the promotion and executes it
