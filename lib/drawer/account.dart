@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:wgit/services/firebase/auth_service.dart';
 
-import '../services/types.dart';
 import 'account_manage_dialog.dart';
 
 final getIt = GetIt.I;
@@ -21,11 +20,11 @@ class _AccountWidgetState extends State<AccountWidget> {
   void initState() {
     super.initState();
 
-    AppUser.onUpdated(() {
-      if (mounted) {
-        setState(() {});
-      }
-    });
+    // AppUser.onUpdated(() {
+    //   if (mounted) {
+    //     setState(() {});
+    //   }
+    // });
 
     // AuthService.onWorkingUpdate((w) {
     //   print("MOUNTED $mounted with working: $w");

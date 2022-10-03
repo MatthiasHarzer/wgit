@@ -440,7 +440,7 @@ Widget buildCircularAvatar({required String url, required double dimension}) {
 
 /// Builds a ListTile representing a [group]
 Widget buildGroupListTile({required Group group, Widget? action}) {
-  var members = group.members.where((m) => group.houseHold.members.contains(m));
+  var members = group.members.where((m) => group.houseHold.membersSnapshot.contains(m));
   return ListTile(
     leading: ConstrainedBox(
       constraints:

@@ -227,7 +227,6 @@ class _MainPageState extends State<MainPage> {
     setState(() {
       _currentHousehold = household;
     });
-    _currentHousehold?.callOnChange();
   }
 
   void _signInTaped() async {

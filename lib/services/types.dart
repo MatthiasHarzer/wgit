@@ -1,39 +1,17 @@
 // ignore_for_file: constant_identifier_names, avoid_function_literals_in_foreach_calls
 import 'dart:async';
-import 'dart:ui';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:collection/collection.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get_it/get_it.dart';
+import 'package:rxdart/rxdart.dart';
 import 'package:wgit/services/firebase/auth_service.dart';
 import 'package:wgit/services/firebase/firebase_ref_service.dart';
 import 'package:wgit/services/firebase/firebase_service.dart';
 
-import '../util/util.dart';
-
 final getIt = GetIt.I;
 final authService = getIt<NewAuthService>();
 final firebaseService = getIt<FirebaseService>();
-
-class Cache<E, T> {
-  final Map<E, T> _cache = {};
-  late final Future<T> Function(E) resolver;
-
-  // late final Function<T>(T)? updater;
-  Cache.withResolver({required this.resolver});
-
-  // Cache.withUpdater({required this.updater});
-
-  /// Tries to get the cached value with the [key] or resolves it if it is not present
-  Future<T> get(E key) async {
-    if (!_cache.containsKey(key)) {
-      _cache[key] = await resolver(key);
-    }
-
-    return _cache[key]!;
-  }
-}
 
 /// An activity is an expense shared by multiple [AppUsers]
 class Activity {
@@ -49,13 +27,12 @@ class Activity {
     return contributions[user] ?? 0;
   }
 
-  Activity._({
-    required this.label,
-    required this.contributions,
-    this.date,
-    this.id,
-    this.groupId
-  });
+  Activity._(
+      {required this.label,
+      required this.contributions,
+      this.date,
+      this.id,
+      this.groupId});
 
   /// Creates an activity from a document snapshot
   static Future<Activity> fromDoc(DocumentSnapshot doc) async {
@@ -80,7 +57,11 @@ class Activity {
     }
 
     return Activity._(
-        id: id, label: label, contributions: contributions, date: date, groupId: group);
+        id: id,
+        label: label,
+        contributions: contributions,
+        date: date,
+        groupId: group);
   }
 
   Activity.empty() : this._(contributions: {}, label: "");
@@ -101,22 +82,20 @@ class Activity {
       "groupId": groupId,
     };
   }
+
   Activity copy() {
     return Activity._(
-      id: id,
-      contributions: Map.of(contributions),
-      label: label,
-      date: date,
-      groupId: groupId
-    );
+        id: id,
+        contributions: Map.of(contributions),
+        label: label,
+        date: date,
+        groupId: groupId);
   }
 
   @override
   String toString() {
     return "Action<$label @$id on $date with $contributions>";
   }
-
-
 }
 
 /// A group consists of a subset of [AppUsers] from one [HouseHold] members, sharing financials
@@ -133,22 +112,26 @@ class Group {
     required this.name,
     required this.members,
     required this.houseHold,
-  }){
-    if(id == "all"){
-      members = houseHold.members;
+  }) {
+    if (id == "all") {
+      members = houseHold.membersSnapshot;
     }
   }
 
   Group.createDefault({required this.houseHold}) {
     id = "all";
     name = "Default";
-    members = [...houseHold.members];
+    members = [...houseHold.membersSnapshot];
   }
 
   Group.temp(HouseHold houseHold)
-      : this._(id: "", name: "", members: List.empty(growable: true), houseHold: houseHold);
+      : this._(
+            id: "",
+            name: "",
+            members: List.empty(growable: true),
+            houseHold: houseHold);
 
-  Group copy(){
+  Group copy() {
     return Group._(
       houseHold: houseHold,
       members: members,
@@ -156,6 +139,13 @@ class Group {
       name: name,
     );
   }
+
+  // static Map<String, Group>
+  //
+  // static getCachedAndUpdateFromDocOrCreateNew(DocumentSnapshot doc, HouseHold houseHold){
+  //
+  // }
+
   static Future<Group> fromDoc(
       DocumentSnapshot doc, HouseHold houseHold) async {
     var id = doc.id;
@@ -165,10 +155,11 @@ class Group {
     var name = data["name"];
     var members = await AppUser.fromUids(data["members"].cast<String>());
 
-    members = members.where((m) => houseHold.members.contains(m)).toList();
+    members =
+        members.where((m) => houseHold.membersSnapshot.contains(m)).toList();
 
     if (id == "all") {
-      members = [...houseHold.members];
+      members = [...houseHold.membersSnapshot];
     }
 
     return Group._(
@@ -176,6 +167,7 @@ class Group {
   }
 }
 
+/// A users role in a [HouseHold]
 class Role {
   static const MEMBER = "member";
   static const ADMIN = "admin";
@@ -186,109 +178,99 @@ class Role {
   }
 }
 
-/// An user from the database
+/// An app user
 class AppUser {
-  static final List<VoidCallback> _onUsersUpdated = [];
-  static final Map<String, AppUser> _CACHE = {};
-
   late final String uid;
   late String displayName;
   late String photoURL;
   String? dynLink;
-  // AppUser get currentUser
 
   bool get isSelf => uid == authService.currentUser?.uid;
 
+  final BehaviorSubject<AppUser> _thisUser = BehaviorSubject();
+
   Future<String> getDynLink() async {
-    if(dynLink == null){
+    if (dynLink == null) {
       dynLink = await firebaseService.createDynamicLinkFor(user: this);
       await firebaseService.modifyUser(uid: uid, dynLink: dynLink);
     }
     return dynLink!;
   }
 
-  AppUser._(
-      {required this.uid,
-      required this.displayName,
-      required this.photoURL,
-      this.dynLink}){
-   final ref = RefService.refOf(uid: uid);
-   ref.snapshots().listen((doc) {
-      final data = doc.data() as Map<String, dynamic>;
-      final modified = _modifyWith(data: data);
-      if(modified){
-        _callOnUpdate();
-      }
-   });
+  /// Creates an instance from a [DocumentSnapshot]
+  AppUser._fromDoc(DocumentSnapshot doc) {
+    Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+
+    uid = doc.id;
+    displayName = data["displayName"] ?? "(Unnamed)";
+    photoURL = data["photoURL"];
+    dynLink = data["dynLink"];
   }
 
-  bool _modifyWith({required Map<String, dynamic> data}){
-    var dn = data["displayName"] ?? displayName;
-    var pu = data["photoURL"] ?? photoURL;
-    var dl = data["dynLink"] ?? dynLink;
-    // var dl = data["dynLink"] ?? dynLink;
-    bool updated = dn != displayName;
-    updated |= pu != photoURL;
-    updated |= dl != dynLink;
-
-    displayName = dn;
-    photoURL = pu;
-    dynLink = dl;
-
-    return updated;
+  AppUser.empty() {
+    uid = "";
+    displayName = "";
+    photoURL = "";
   }
 
+  /// Updated the attributed with the data from the given [DocumentSnapshot]
+  AppUser _modifyWith({required DocumentSnapshot doc}) {
+    Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
 
+    displayName = data["displayName"] ?? displayName;
+    photoURL = data["photoURL"] ?? photoURL;
+    dynLink = data["dynLink"] ?? dynLink;
 
-  static AppUser _getCachedOrCreate(
-      {required String uid,
-      required String displayName,
-      required String photoURL,
-      String? dynLink, bool noCache = false}) {
-    if (_CACHE.containsKey(uid) && !noCache) return _CACHE[uid]!;
+    return this;
+  }
 
-    var user = AppUser._(
-        uid: uid,
-        displayName: displayName,
-        photoURL: photoURL,
-        dynLink: dynLink);
-    if(!noCache){
-      _CACHE[uid] = user;
+  static final Map<String, AppUser> _cache = {};
+  static final BehaviorSubject<List<AppUser>> _users =
+      BehaviorSubject.seeded([]);
+
+  // static final List<AppUser2> _allUsers = [];
+
+  static Stream<List<AppUser>> get usersStream => _users.stream;
+
+  /// Tries to get a cached instance and update in with the doc data or create a new instance with the doc data
+  static AppUser _getCachedAndUpdateFromDocOrCreateNew(DocumentSnapshot doc) {
+    AppUser? user = _cache[doc.id];
+
+    if (user == null) {
+      user = AppUser._fromDoc(doc);
+      _cache[doc.id] = user;
+    } else {
+      user = user._modifyWith(doc: doc);
     }
+    user._thisUser.add(user);
+    _users.add(_cache.values.toList());
+
     return user;
   }
 
-  static AppUser fromFirebaseUser(User user) {
-    var uid = user.uid;
-    var displayName = user.displayName!;
-    var photoURL = user.photoURL!;
-    return _getCachedOrCreate(
-        uid: uid, displayName: displayName, photoURL: photoURL);
+  /// Resolved an user from a given [uid]
+  static Future<AppUser?> fromUid(String uid) async {
+    if (_cache.containsKey(uid)) return _cache[uid]!;
+
+    final ref = RefService.refOf(uid: uid);
+
+    final completer = Completer<AppUser?>();
+
+    final sub = ref.snapshots().listen((doc) {
+      if (!doc.exists) {
+        if (!completer.isCompleted) {
+          completer.complete(null);
+        }
+        return;
+      }
+      final user = _getCachedAndUpdateFromDocOrCreateNew(doc);
+      if (!completer.isCompleted) {
+        completer.complete(user);
+      }
+    });
+
+    return completer.future;
   }
-
-  static AppUser _fromJson(Map<String, dynamic> data, {bool noCache = false}) {
-    var uid = data["uid"];
-    var displayName = data["displayName"];
-    var photoURL = data["photoURL"];
-    var dynLink = data["dynLink"];
-    return _getCachedOrCreate(
-        uid: uid,
-        displayName: displayName,
-        photoURL: photoURL,
-        dynLink: dynLink,
-        noCache: noCache);
-  }
-
-
-  /// Returns the user with the given [uid]
-  static Future<AppUser?> fromUid(String uid, {bool noCache = false}) async {
-    if (_CACHE.containsKey(uid) && !noCache) return _CACHE[uid]!;
-    var doc = await RefService.refOf(uid: uid).get();
-    if (!doc.exists) return null;
-    final data = doc.data() as Map<String, dynamic>;
-    return _fromJson(data, noCache: noCache);
-  }
-
 
   /// Returns a list of users matching the [uids]
   static Future<List<AppUser>> fromUids(Iterable<String> uids) async {
@@ -296,20 +278,6 @@ class AppUser {
         .whereType<AppUser>()
         .toList();
   }
-
-  static AppUser? tryGetCached(String uid) {
-    if (_CACHE.containsKey(uid)) return _CACHE[uid];
-    return null;
-  }
-
-  static void onUpdated(VoidCallback cb){
-    _onUsersUpdated.add(cb);
-  }
-
-  static void _callOnUpdate(){
-    _onUsersUpdated.forEach((cb)=>cb());
-  }
-
 
   @override
   String toString() {
@@ -319,30 +287,38 @@ class AppUser {
 
 /// Contains user specific content for one [HouseHold]
 class HouseHoldMemberData {
-  late String id;
+  late AppUser user;
   late double totalShouldPay;
   late double totalPaid;
   String role = "member";
 
   double get standing => totalPaid - totalShouldPay;
 
+  HouseHoldMemberData._(
+      {required this.user,
+      required this.totalShouldPay,
+      required this.totalPaid,
+      this.role = "member"});
+
   HouseHoldMemberData.emptyOf(AppUser user) {
-    id = user.uid;
+    user = user;
     totalPaid = 0;
     totalShouldPay = 0;
   }
 
-  HouseHoldMemberData.fromDoc(DocumentSnapshot doc) {
-    id = doc.id;
+  static Future<HouseHoldMemberData> fromDoc(DocumentSnapshot doc) async {
     if (!doc.exists) {
-      totalShouldPay = 0;
-      totalPaid = 0;
+      return HouseHoldMemberData._(
+          user: AppUser.empty(), totalPaid: 0, totalShouldPay: 0);
     } else {
       var data = doc.data() as Map<String, dynamic>;
 
-      totalShouldPay = data["totalShouldPay"].toDouble();
-      totalPaid = data["totalPaid"].toDouble();
-      role = data["role"] ?? role;
+      return HouseHoldMemberData._(
+          user: await AppUser.fromUid(doc.id) ?? AppUser.empty(),
+          totalShouldPay: data["totalShouldPay"]?.toDouble() ?? 0,
+          totalPaid: data["totalPaid"]?.toDouble() ?? 0,
+          role: data["role"] ?? Role.MEMBER,
+      );
     }
   }
 
@@ -357,26 +333,41 @@ class HouseHoldMemberData {
 
 /// A household is a collective of [AppUsers]
 class HouseHold {
-  static final Map<String, HouseHold> _CACHE = {};
-
   late String id;
   late String name;
-  late List<AppUser> members;
-  // late List<AppUser> admins;
 
-  final List<VoidCallback> _onChange = [];
-  List<Activity> activities = [];
-  List<Group> groups = [];
-  Map<AppUser, HouseHoldMemberData> memberData = {}; /// uid: data
+  /// Consider using [membersStream] instead of this list
+  // late List<AppUser> members;
 
-  Group? get defaultGroup => groups.firstWhereOrNull((g) => g.isDefault);
+  final List<StreamSubscription> _subs = [];
+
+  final BehaviorSubject<List<Group>> _groups = BehaviorSubject.seeded([]);
+  final BehaviorSubject<List<Activity>> _activities =
+      BehaviorSubject.seeded([]);
+  final BehaviorSubject<List<HouseHoldMemberData>> _memberData =
+      BehaviorSubject.seeded([]);
+  final BehaviorSubject<List<AppUser>> _members = BehaviorSubject.seeded([]);
+
+  Stream<List<AppUser>> get membersStream => _members.stream;
+
+  Stream<List<Group>> get groupsStream => _groups.stream;
+
+  Stream<List<Activity>> get activitiesStream => _activities.stream;
+
+  Stream<List<HouseHoldMemberData>> get membersDataStream => _memberData.stream;
+
+  List<AppUser> get membersSnapshot => _members.value;
+
+  List<Group> get groupsSnapshot => _groups.value;
+
+  List<Activity> get activitiesSnapshot => _activities.value;
+
+  List<HouseHoldMemberData> get membersDataSnapshot => _memberData.value;
+
+  Group? get defaultGroup => _groups.value.firstWhereOrNull((g) => g.isDefault);
 
   List<AppUser> get validAdmins =>
-      members.where((m) => isUserAdmin(m)).toList();
-
-  final List<StreamController<List<Activity>>> _activitiesStreamControllers =
-      [];
-  final List<StreamController<List<Group>>> _groupsStreamControllers = [];
+      membersSnapshot.where((m) => isUserAdmin(m)).toList();
 
   // Iterable<String> get memberIds => members.map((m) => m.user.uid);
   AppUser get thisUser => authService.currentUser!;
@@ -385,190 +376,60 @@ class HouseHold {
 
   bool get thisUserIsTheOnlyAdmin => thisUserIsAdmin && validAdmins.length == 1;
 
-  /// Returns whether the current user can leave the house hold or not.
-  /// e.x. the user can't leave if it's the only admin in the household
-  // bool canLeaveHousehold(){
-  //   if(thisUserIsAdmin && validAdmins.length == 1){
-  //     /// The user is the only admin
-  //   }
-  // }
+  HouseHold._({
+    required this.id,
+    required this.name,
+    required List<AppUser> members,
+  }) {
+    /// Initial value
+    _members.add(members);
 
+    /// members stream
+    _subs.add(AppUser.usersStream.listen((event) {
+      _members.add(event.where((m) => membersSnapshot.contains(m)).toList());
+    }));
 
-
-  void onChange(VoidCallback cb) {
-    _onChange.add(cb);
-  }
-
-  void callOnChange() {
-    _onChange.forEach((cb) => cb());
-  }
-
-  /// Returns a stream that gets updated when new activities are incoming
-  Stream<List<Activity>> getActivityStream() {
-    StreamController<List<Activity>> controller = StreamController();
-    _activitiesStreamControllers.add(controller);
-    Util.runDelayed(() {
-      _updateStreams(
-          controllers: _activitiesStreamControllers, withData: activities);
-    }, const Duration(milliseconds: 300));
-    return controller.stream;
-  }
-
-  /// Returns a stream that gets updated when new groups are incoming
-  Stream<List<Group>> getGroupsStream() {
-    StreamController<List<Group>> controller = StreamController();
-    _groupsStreamControllers.add(controller);
-    Util.runDelayed(() {
-      _updateStreams(controllers: _groupsStreamControllers, withData: groups);
-    }, const Duration(milliseconds: 300));
-    return controller.stream;
-  }
-
-  /// Unregisters a stream from any controller streams
-  void unregisterStream(Stream stream) {
-    var allStream = [
-      ..._activitiesStreamControllers,
-      ..._groupsStreamControllers
-    ];
-    var t = allStream.where((c) => c.stream == stream);
-    if (t.isEmpty) return;
-
-    t.forEach((c){
-      _activitiesStreamControllers.remove(c);
-      _groupsStreamControllers.remove(c);
-      c.close();
-    });
-
-  }
-
-  /// Updates an array of [controllers] with the given data
-  void _updateStreams(
-      {required List<StreamController> controllers, required List withData}) {
-    for (var ctrl in controllers) {
-      ctrl.add(withData);
-    }
-  }
-
-  /// Setups firebase listeners (streams)
-  void _setup() {
-    _setupActivityStream();
-    _setupGroupsStream();
-    _setupMemberDataStream();
-
-    AppUser.onUpdated(() {
-      callOnChange();
-    });
-  }
-
-  /// Setup realtime updates for activities
-  void _setupActivityStream() {
-    RefService.refOfActivities(houseHoldId: id)
-        .limit(50)
-        .orderBy("timestamp", descending: true)
+    /// Groups stream
+    _subs.add(RefService.groupsRefOf(houseHoldId: id)
         .snapshots()
-        .listen((event) async {
-      var docs = event.docs;
+        .listen((snapshot) async {
+      _groups.add(await Future.wait(
+          [for (var doc in snapshot.docs) Group.fromDoc(doc, this)]));
+    }));
 
-      activities =
-          await Future.wait([for (var doc in docs) Activity.fromDoc(doc)]);
-
-      callOnChange();
-      _updateStreams(
-          controllers: _activitiesStreamControllers, withData: activities);
-    });
-  }
-
-  /// Setup realtime updates for groups
-  void _setupGroupsStream() {
-    RefService.groupsRefOf(houseHoldId: id).snapshots().listen((event) async {
-      var docs = event.docs;
-
-      groups =
-          await Future.wait([for (var doc in docs) Group.fromDoc(doc, this)]);
-
-      if (!groups.map((g) => g.id).contains("all")) {
-        var df = Group.createDefault(houseHold: this);
-        await firebaseService.createGroup(
-            houseHoldId: id,
-            name: df.name,
-            members: df.members,
-            groupId: df.id);
-        return;
-      }
-
-      callOnChange();
-      _updateStreams(controllers: _groupsStreamControllers, withData: groups);
-    });
-  }
-
-  void _setupMemberDataStream() {
-    RefService.membersDataRefOf(houseHoldId: id)
+    /// Activities stream
+    _subs.add(RefService.refOfActivities(houseHoldId: id)
         .snapshots()
-        .listen((event) async {
-      var docs = event.docs;
-      memberData = {};
+        .listen((snapshot) async {
+      _activities.add(await Future.wait(
+          [for (var doc in snapshot.docs) Activity.fromDoc(doc)]));
+    }));
 
-      for(var doc in docs){
-        final AppUser? u = await AppUser.fromUid(doc.id);
-        if(u != null){
-          memberData[u] = HouseHoldMemberData.fromDoc(doc);
-        }
-      }
+    /// Member data stream
+    _subs.add(RefService.membersDataRefOf(houseHoldId: id)
+        .snapshots()
+        .listen((snapshot) async{
+      _memberData.add(
+          await Future.wait([for (var doc in snapshot.docs) HouseHoldMemberData.fromDoc(doc)]));
+    }));
 
-      callOnChange();
+    /// Keep the attribute up to date with member changes
+    _members.listen((value) {
+      members = value;
     });
-  }
-
-  HouseHold._(
-      {required this.id,
-      required this.name,
-      required this.members,}) {
-    _setup();
-  }
-
-  static HouseHold? tryGetCached(String id) {
-    if (_CACHE.containsKey(id)) return _CACHE[id];
-    return null;
-  }
-
-  static Future<HouseHold> getCachedAndUpdateFromDocOrCreateNew(
-      DocumentSnapshot doc) async {
-    var id = doc.id;
-
-    HouseHold houseHold;
-
-    var cached = tryGetCached(id);
-    if (cached != null) {
-      houseHold = await cached._updateWith(doc);
-    } else {
-      var data = doc.data() as Map<String, dynamic>;
-
-      var name = data["name"];
-      var members = await AppUser.fromUids(data["members"].cast<String>());
-      // var admins = await AppUser.fromUids(data["admins"].cast<String>());
-
-      houseHold = HouseHold._(
-          id: id,
-          name: name,
-          members: members.toList(),);
-      _CACHE[id] = houseHold;
-    }
-    houseHold.callOnChange();
-    return houseHold;
   }
 
   /// Updates this household with data from the given [doc]. Returns itself
   Future<HouseHold> _updateWith(DocumentSnapshot doc) async {
     id = doc.id;
-
     var data = doc.data() as Map<String, dynamic>;
 
     name = data["name"];
-    members = await AppUser.fromUids(data["members"].cast<String>());
-    // admins = await AppUser.fromUids(data["admins"].cast<String>());
 
-    defaultGroup?.members = members;
+    _members.add(await AppUser.fromUids(data["members"].cast<String>()));
+    // members = await AppUser.fromUids(data["members"].cast<String>());
 
+    defaultGroup?.members = membersSnapshot;
     return this;
   }
 
@@ -584,19 +445,21 @@ class HouseHold {
 
   /// Returns the member data of this household
   HouseHoldMemberData memberDataOf({required AppUser member}) {
-    if (memberData.keys.contains(member)) return memberData[member]!;
-    return HouseHoldMemberData.emptyOf(member);
+    return _memberData.value.firstWhereOrNull((mb) => mb.user.uid == member.uid) ??
+        HouseHoldMemberData.emptyOf(member);
   }
 
   /// Returns whether the given [user] is active (member) or only in active (no member but memberdata)
-  bool isUserActive(AppUser user){
-    return members.contains(user);
+  bool isUserActive(AppUser user) {
+    return membersSnapshot.contains(user);
   }
 
-  Group? findGroup(String? groupId){
-    return groups.firstWhereOrNull((g) => g.id == groupId);
+  /// Returns the group with the given [groupId] or [null] if none was found
+  Group? findGroup(String? groupId) {
+    return _groups.value.firstWhereOrNull((g) => g.id == groupId);
   }
 
+  /// Adjusts the [from] and [to] users paid/shouldPay amount to ...
   Future exchangeMoney(
       {required AppUser from,
       required AppUser to,
@@ -615,13 +478,35 @@ class HouseHold {
     ]);
   }
 
-  static void clearCached(){
-    _CACHE.clear();
+  static final Map<String, HouseHold> _cache = {};
+
+  // static Stream<List<HouseHold2>> get availableHouseholdsStream => _availableHouseholds.stream;
+
+  /// Tries to fetch a cached household and updates it with the doc data or creates a new household from the doc data
+  static Future<HouseHold> getCachedAndUpdateFromDocOrCreateNew(
+      DocumentSnapshot doc) async {
+    HouseHold? houseHold = _cache[doc.id];
+
+    if (houseHold == null) {
+      final data = doc.data() as Map<String, dynamic>;
+      final id = doc.id;
+      final name = data["name"];
+      final members = await AppUser.fromUids(data["members"].cast<String>());
+
+      houseHold = HouseHold._(id: id, name: name, members: members);
+      _cache[doc.id] = houseHold;
+    } else {
+      houseHold = await houseHold._updateWith(doc);
+    }
+    return houseHold;
+  }
+
+  static HouseHold? tryGetCached(String id) {
+    return _cache[id];
   }
 
   @override
   String toString() {
     return "Household<$name @ $id>";
   }
-// late AppUser owner;
 }

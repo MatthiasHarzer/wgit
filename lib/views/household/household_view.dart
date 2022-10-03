@@ -27,9 +27,9 @@ class _HouseHoldViewState extends State<HouseHoldView> {
   void initState() {
     super.initState();
 
-    houseHold.onChange(() => {
-          if (mounted) {setState(() {})}
-        });
+    // houseHold.onChange(() => {
+    //       if (mounted) {setState(() {})}
+    //     });
   }
 
   Future _sendMoneyToMemberTapped(AppUser member) async {
@@ -76,74 +76,79 @@ class _HouseHoldViewState extends State<HouseHoldView> {
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      children: [
-        ExpandableListItem(
-          title: "MEMBERS",
-          crossSessionConfig: ExpandableCrossSessionConfig(
-            "household_view_member",
-            defaultExpanded: false,
-          ),
-          content: HouseHoldMembersSnippet(
-            houseHold: houseHold,
-          ),
-          action: houseHold.thisUserIsAdmin
-              ? TextButton(
-                  onPressed: _openMemberManagement,
-                  child: const Text(
-                    "MANAGE",
-                  ),
-                )
-              : null,
-        ),
-        const Divider(),
-        ExpandableListItem(
-          title: "GROUPS",
-          crossSessionConfig: ExpandableCrossSessionConfig(
-            "household_view_groups",
-            defaultExpanded: false,
-          ),
-          content: MemberGroupsSnippet(
-            houseHold: houseHold,
-          ),
-          action: houseHold.thisUserIsAdmin
-              ? TextButton(
-                  onPressed: _openMemberGroupsManagement,
-                  child: const Text(
-                    "MANAGE",
-                  ),
-                )
-              : null,
-        ),
-        const Divider(),
-        ExpandableListItem(
-          title: "STANDINGS",
-          crossSessionConfig: ExpandableCrossSessionConfig(
-            "household_view_standings",
-            defaultExpanded: true,
-          ),
-          content: HouseHoldStandings(
-            houseHold: houseHold,
-            onMoneySendTap: _sendMoneyToMemberTapped,
-          ),
-          initialExpanded: true,
-        ),
-        const Divider(),
-        ExpandableListItem(
-          title: "ACTIVITIES",
-          crossSessionConfig: ExpandableCrossSessionConfig(
-            "household_view_activities",
-            defaultExpanded: true,
-          ),
-          content: HouseHoldActivitiesView(
-            houseHold: houseHold,
-          ),
-          initialExpanded: true,
-        ),
-        const SizedBox(
-          height: 60,
-        )
-      ],
+    return StreamBuilder(
+      stream: houseHold.membersDataStream,
+      builder: (context, snapshot) {
+        return ListView(
+          children: [
+            ExpandableListItem(
+              title: "MEMBERS",
+              crossSessionConfig: ExpandableCrossSessionConfig(
+                "household_view_member",
+                defaultExpanded: false,
+              ),
+              content: HouseHoldMembersSnippet(
+                houseHold: houseHold,
+              ),
+              action: houseHold.thisUserIsAdmin
+                  ? TextButton(
+                      onPressed: _openMemberManagement,
+                      child: const Text(
+                        "MANAGE",
+                      ),
+                    )
+                  : null,
+            ),
+            const Divider(),
+            ExpandableListItem(
+              title: "GROUPS",
+              crossSessionConfig: ExpandableCrossSessionConfig(
+                "household_view_groups",
+                defaultExpanded: false,
+              ),
+              content: MemberGroupsSnippet(
+                houseHold: houseHold,
+              ),
+              action: houseHold.thisUserIsAdmin
+                  ? TextButton(
+                      onPressed: _openMemberGroupsManagement,
+                      child: const Text(
+                        "MANAGE",
+                      ),
+                    )
+                  : null,
+            ),
+            const Divider(),
+            ExpandableListItem(
+              title: "STANDINGS",
+              crossSessionConfig: ExpandableCrossSessionConfig(
+                "household_view_standings",
+                defaultExpanded: true,
+              ),
+              content: HouseHoldStandings(
+                houseHold: houseHold,
+                onMoneySendTap: _sendMoneyToMemberTapped,
+              ),
+              initialExpanded: true,
+            ),
+            const Divider(),
+            ExpandableListItem(
+              title: "ACTIVITIES",
+              crossSessionConfig: ExpandableCrossSessionConfig(
+                "household_view_activities",
+                defaultExpanded: true,
+              ),
+              content: HouseHoldActivitiesView(
+                houseHold: houseHold,
+              ),
+              initialExpanded: true,
+            ),
+            const SizedBox(
+              height: 60,
+            )
+          ],
+        );
+      }
     );
   }
 }

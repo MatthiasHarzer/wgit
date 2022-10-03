@@ -31,10 +31,10 @@ class _ManageMembersViewState extends State<ManageMembersView> {
   void initState() {
     super.initState();
 
-    houseHold.onChange(() =>
-    {
-      if (mounted) {setState(() {})}
-    });
+    // houseHold.onChange(() =>
+    // {
+    //   if (mounted) {setState(() {})}
+    // });
 
     // getIt.get<NewAuthService>().authStream.listen((event) {
     //   print("AUTHSTREAM EVENT 3");
@@ -174,20 +174,26 @@ class _ManageMembersViewState extends State<ManageMembersView> {
       appBar: AppBar(
         title: Text("Members of \"${houseHold.name}\""),
       ),
-      body: ListView(
-        children: [
-          for (var member in houseHold.members) _buildMemberItem(member),
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Align(
-              alignment: Alignment.center,
-              child: TextButton(
-                onPressed: _openQrCodeScanner,
-                child: const Text("ADD MEMBER"),
-              ),
-            ),
-          )
-        ],
+      body: StreamBuilder(
+        stream: houseHold.membersStream,
+        builder: (context, snapshot) {
+          final members = snapshot.data ?? [];
+          return ListView(
+            children: [
+              for (var member in members) _buildMemberItem(member),
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Align(
+                  alignment: Alignment.center,
+                  child: TextButton(
+                    onPressed: _openQrCodeScanner,
+                    child: const Text("ADD MEMBER"),
+                  ),
+                ),
+              )
+            ],
+          );
+        }
       ),
     );
   }

@@ -30,7 +30,7 @@ class _DrawerCurrentHouseHoldActionsState
 
   void _leaveHouseholdTapped() async {
     if(working) return;
-    bool alone = houseHold.members.length == 1;
+    bool alone = houseHold.membersSnapshot.length == 1;
     bool isOnlyAdmin = houseHold.thisUserIsTheOnlyAdmin;
 
     setState(() {

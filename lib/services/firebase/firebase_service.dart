@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
 import 'package:get_it/get_it.dart';
 import 'package:rxdart/rxdart.dart';
@@ -49,7 +48,7 @@ class FirebaseService {
   Future addMember(HouseHold houseHold, AppUser user) async {
     if (!houseHold.thisUserIsAdmin) return;
 
-    var currentMembers = houseHold.members.map((m) => m.uid).toList();
+    var currentMembers = houseHold.membersSnapshot.map((m) => m.uid).toList();
 
     if (currentMembers.contains(user.uid)) return;
 
@@ -61,7 +60,7 @@ class FirebaseService {
 
   /// Promotes the given [member] int the given [houseHold]
   Future promoteMember(HouseHold houseHold, AppUser member) async {
-    if (!houseHold.members.contains(member)) return;
+    if (!houseHold.membersSnapshot.contains(member)) return;
 
     // var admins = [...houseHold.admins];
     // admins.add(member);
@@ -103,9 +102,9 @@ class FirebaseService {
 
   /// Removes the given [member] from the given [houseHold]
   Future removeMember(HouseHold houseHold, AppUser member) async {
-    if (!houseHold.members.contains(member)) return;
+    if (!houseHold.membersSnapshot.contains(member)) return;
 
-    var members = [...houseHold.members];
+    var members = [...houseHold.membersSnapshot];
     members.remove(member);
 
     await RefService.refOf(houseHoldId: houseHold.id)
@@ -135,7 +134,7 @@ class FirebaseService {
       {required HouseHold houseHold,
       required HouseHoldMemberData memberData}) async {
     var ref = RefService.memberDataRefOf(
-        houseHoldId: houseHold.id, uid: memberData.id);
+        houseHoldId: houseHold.id, uid: memberData.user.uid);
 
     await ref.set(memberData.toJson());
   }

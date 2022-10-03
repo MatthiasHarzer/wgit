@@ -151,11 +151,17 @@ class _CreateOrEditGroupDialogState extends State<_CreateOrEditGroupDialog> {
                     SizedBox(
                       height: 300,
                       width: 400,
-                      child: ListView(
-                        children: [
-                          for (var member in houseHold.members)
-                            _buildUserSelect(member),
-                        ],
+                      child: StreamBuilder(
+                        stream: houseHold.membersStream,
+                        builder: (context, snapshot) {
+                          final members = snapshot.data ?? [];
+                          return ListView(
+                            children: [
+                              for (var member in members)
+                                _buildUserSelect(member),
+                            ],
+                          );
+                        }
                       ),
                     ),
 
@@ -240,11 +246,11 @@ class _ManageMemberGroupsViewState extends State<ManageMemberGroupsView> {
   void initState() {
     super.initState();
 
-    houseHold.onChange(() {
-      if (mounted) {
-        setState(() {});
-      }
-    });
+    // houseHold.onChange(() {
+    //   if (mounted) {
+    //     setState(() {});
+    //   }
+    // });
   }
 
   void _editOrNewGroupTapped({Group? group}) {
@@ -270,19 +276,25 @@ class _ManageMemberGroupsViewState extends State<ManageMemberGroupsView> {
         padding: const EdgeInsets.all(8.0),
         child: Column(
           children: [
-            Column(
-              children: [
-                for (var group in houseHold.groups)
-                  buildGroupListTile(
-                    group: group,
-                    action: IconButton(
-                      onPressed: group.isDefault
-                          ? null
-                          : () => _editOrNewGroupTapped(group: group),
-                      icon: const Icon(Icons.edit),
-                    ),
-                  ),
-              ],
+            StreamBuilder(
+              stream: houseHold.groupsStream,
+              builder: (context, snapshot) {
+                final groups = snapshot.data ?? [];
+                return Column(
+                  children: [
+                    for (var group in groups)
+                      buildGroupListTile(
+                        group: group,
+                        action: IconButton(
+                          onPressed: group.isDefault
+                              ? null
+                              : () => _editOrNewGroupTapped(group: group),
+                          icon: const Icon(Icons.edit),
+                        ),
+                      ),
+                  ],
+                );
+              }
             ),
             TextButton(
                 onPressed: () => _editOrNewGroupTapped(),

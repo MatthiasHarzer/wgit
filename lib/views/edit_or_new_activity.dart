@@ -47,12 +47,6 @@ class _EditOrNewActivityState extends State<EditOrNewActivity> {
 
     tempActivity = Activity.empty();
 
-    houseHold.onChange(() {
-      if (mounted) {
-        setState(() {});
-      }
-    });
-
     if (widget.existingActivity != null) {
       isEditMode = true;
       tempActivity = widget.existingActivity!.copy();
@@ -144,7 +138,7 @@ class _EditOrNewActivityState extends State<EditOrNewActivity> {
           return;
         }
         Group? group =
-            houseHold.groups.firstWhereOrNull((g) => g.id == newValue);
+            houseHold.groupsSnapshot.firstWhereOrNull((g) => g.id == newValue);
         if (group != null) {
           onChanged(group);
         }
@@ -296,13 +290,20 @@ class _EditOrNewActivityState extends State<EditOrNewActivity> {
                               fontWeight: FontWeight.w500),
                         ),
                         const Spacer(),
-                        _buildGroupsSelect(
-                            value: selectedGroup,
-                            options: houseHold.groups,
-                            onChanged: (g) => setState(() {
+                        StreamBuilder(
+                          stream: houseHold.groupsStream,
+                          builder: (context, snapshot) {
+                            final groups = snapshot.data ?? [];
+                            return _buildGroupsSelect(
+                                value: selectedGroup,
+                                options: groups,
+                                onChanged: (g) => setState(() {
                                   selectedGroup = g;
                                 }),
-                            placeHolder: "GORUP"),
+                                placeHolder: "GORUP",
+                            );
+                          },
+                        ),
                         const Spacer(),
                       ],
                     ),

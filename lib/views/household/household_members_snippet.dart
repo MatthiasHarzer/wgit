@@ -9,7 +9,7 @@ class HouseHoldMembersSnippet extends StatelessWidget {
   const HouseHoldMembersSnippet({required this.houseHold, Key? key})
       : super(key: key);
 
-  List<AppUser> get members => houseHold.members;
+  // List<AppUser> get members => houseHold.members;
 
 
   ///
@@ -40,10 +40,16 @@ class HouseHoldMembersSnippet extends StatelessWidget {
       scrollDirection: Axis.horizontal,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
-        child: Row(
-          children: [
-            for (var user in members) _buildUserSnippet(user)
-          ],
+        child: StreamBuilder(
+          stream: houseHold.membersStream,
+          builder: (context, snapshot) {
+            final members = snapshot.data ?? [];
+            return Row(
+              children: [
+                for (var user in members) _buildUserSnippet(user)
+              ],
+            );
+          }
         ),
       ),
     );

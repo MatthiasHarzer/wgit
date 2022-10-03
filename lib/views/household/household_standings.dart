@@ -36,9 +36,9 @@ class _HouseHoldStandingsItemState extends State<_HouseHoldStandingsItem> {
   void initState(){
     super.initState();
 
-    widget.houseHold.onChange(() {
-      if (mounted) setState(() {});
-    });
+    // widget.houseHold.onChange(() {
+    //   if (mounted) setState(() {});
+    // });
   }
 
 
@@ -97,46 +97,51 @@ class _HouseHoldStandingsItemState extends State<_HouseHoldStandingsItem> {
 
     return Opacity(
       opacity: isActiveUser ? 1.0 : 0.5,
-      child: ListTile(
-        leading: buildCircularAvatar(url: member.photoURL, dimension: avatarSize),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if(!isActiveUser)
-              const Text("INACTIVE", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500), textAlign: TextAlign.left,),
-            Row(
+      child: StreamBuilder(
+        stream: widget.houseHold.membersDataStream,
+        builder: (context, snapshot) {
+          return ListTile(
+            leading: buildCircularAvatar(url: member.photoURL, dimension: avatarSize),
+            title: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                ConstrainedBox(
-                  constraints: const BoxConstraints(
-                    maxWidth: 180
-                  ),
-                  child: Text(
-                    "${member.displayName}: ",
-                    style: titleStyle,
-                  ),
-                ),
-                _buildColoredValue(
-                  standing,
-                  style: titleStyle,
+                if(!isActiveUser)
+                  const Text("INACTIVE", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500), textAlign: TextAlign.left,),
+                Row(
+                  children: [
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(
+                        maxWidth: 180
+                      ),
+                      child: Text(
+                        "${member.displayName}: ",
+                        style: titleStyle,
+                      ),
+                    ),
+                    _buildColoredValue(
+                      standing,
+                      style: titleStyle,
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
-        ),
-        subtitle: Text(
-            "Paid: €${Util.formatAmount(totalPaid)} | Should Pay: €${Util.formatAmount(totalShouldPay)}", style: subtitleStyle,),
-        trailing: IconButton(
-          splashRadius: 25,
-          tooltip: "Exchange Money",
-          icon: working
-              ? const CircularProgressIndicator()
-              : const Icon(Icons.payments),
-          onPressed: member.isSelf || working
-              ? null
-              : () {
-                  _onSendMoneyTaped(member);
-                },
-        ),
+            subtitle: Text(
+                "Paid: €${Util.formatAmount(totalPaid)} | Should Pay: €${Util.formatAmount(totalShouldPay)}", style: subtitleStyle,),
+            trailing: IconButton(
+              splashRadius: 25,
+              tooltip: "Exchange Money",
+              icon: working
+                  ? const CircularProgressIndicator()
+                  : const Icon(Icons.payments),
+              onPressed: member.isSelf || working
+                  ? null
+                  : () {
+                      _onSendMoneyTaped(member);
+                    },
+            ),
+          );
+        }
       ),
     );
   }
@@ -157,26 +162,28 @@ class HouseHoldStandings extends StatefulWidget {
 class _HouseHoldStandingsState extends State<HouseHoldStandings> {
   HouseHold get houseHold => widget.houseHold;
 
-  Iterable<AppUser> get _orderedUsers{
-    final members = [...houseHold.memberData.keys];
-    members.sort(
-          (a, b) => houseHold.isUserActive(b) ? 1 : houseHold.isUserActive(a) ? -1 : 0,
-    );
-    return members;
-  }
-
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        for (var member in _orderedUsers)
-          _HouseHoldStandingsItem(
-            member: member,
-            houseHold: houseHold,
-            onMoneySendTap: widget.onMoneySendTap,
-          ),
-      ],
+    return StreamBuilder(
+      stream: houseHold.membersDataStream,
+      builder: (context, snapshot) {
+        final members = (snapshot.data ?? []).map((md)=>md.user);
+        final orderedUsers = [...members];
+        orderedUsers.sort(
+              (a, b) => houseHold.isUserActive(b) ? 1 : houseHold.isUserActive(a) ? -1 : 0,
+        );
+        return Column(
+          children: [
+            for (var member in orderedUsers)
+              _HouseHoldStandingsItem(
+                member: member,
+                houseHold: houseHold,
+                onMoneySendTap: widget.onMoneySendTap,
+              ),
+          ],
+        );
+      }
     );
   }
 }

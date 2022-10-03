@@ -18,7 +18,7 @@ class HouseHoldActivitiesView extends StatefulWidget {
 
 class _HouseHoldActivitiesViewState extends State<HouseHoldActivitiesView> {
   HouseHold get houseHold => widget.houseHold;
-  Stream<List<Activity>> get stream => houseHold.getActivityStream();
+  // Stream<List<Activity>> get stream => houseHold.getActivityStream();
 
   @override
   void initState() {
@@ -37,10 +37,7 @@ class _HouseHoldActivitiesViewState extends State<HouseHoldActivitiesView> {
   @override
   void dispose() {
     super.dispose();
-
-
-
-    houseHold.unregisterStream(stream);
+    // houseHold.unregisterStream(stream);
   }
 
   void _editActivityTaped(Activity activity) {
@@ -79,7 +76,7 @@ class _HouseHoldActivitiesViewState extends State<HouseHoldActivitiesView> {
     }
 
     return StreamBuilder(
-      stream: stream,
+      stream: houseHold.activitiesStream,
       builder: (context, snapshot) => Column(
         children: [
           for (var activity in snapshot.data ?? []) buildActivity(activity)

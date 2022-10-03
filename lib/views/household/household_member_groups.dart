@@ -1,7 +1,6 @@
 
 
 import 'package:flutter/material.dart';
-import 'package:wgit/theme.dart';
 import 'package:wgit/util/components.dart';
 
 import '../../services/types.dart';
@@ -21,18 +20,24 @@ class _MemberGroupsSnippetState extends State<MemberGroupsSnippet> {
   void initState(){
     super.initState();
 
-    houseHold.onChange(() => {
-      if (mounted) {setState(() {})}
-    });
+    // houseHold.onChange(() => {
+    //   if (mounted) {setState(() {})}
+    // });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        for(var group in houseHold.groups)
-          buildGroupListTile(group: group),
-      ],
+    return StreamBuilder(
+      stream: houseHold.groupsStream,
+      builder: (context, snapshot) {
+        final groups = snapshot.data ?? [];
+        return Column(
+          children: [
+            for(var group in groups)
+              buildGroupListTile(group: group),
+          ],
+        );
+      }
     );
   }
 }
