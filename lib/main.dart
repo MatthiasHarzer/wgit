@@ -2,6 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
+import 'package:url_strategy/url_strategy.dart';
 import 'package:wgit/services/config_service.dart';
 import 'package:wgit/services/firebase/auth_service.dart';
 import 'package:wgit/services/firebase/firebase_service.dart';
@@ -36,6 +37,8 @@ void main() async {
   await authService.ensureInitialized();
   await firebaseService.ensureInitialized();
 
+  setPathUrlStrategy();
+
   // await AuthService.ensureInitialized();
 
   // String link = "https://wgit.page.link/GUDU";
@@ -54,7 +57,7 @@ void main() async {
       Uri uri = initialLink.link;
       uid = uri.queryParameters["user"];
     }
-    uid = "2XYOJ10MmNgBP42aIh7nAukFsox1";
+    // uid = "2XYOJ10MmNgBP42aIh7nAukFsox1";
     runApp(MyApp(initialUserId: uid));
   }
 }

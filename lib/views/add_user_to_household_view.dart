@@ -93,23 +93,40 @@ class _AddUserToHouseholdViewState extends State<AddUserToHouseholdView> {
 
   /// Builds a snippet, representing the user
   Widget _buildUserSnippet(AppUser user) {
-    return ListTile(
-      leading: buildCircularAvatar(url: user.photoURL, dimension: 45),
-      title: Text(
-        user.displayName,
-        style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 18),
+    return Padding(
+      padding: const EdgeInsets.all(18.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(right: 10.0),
+            child: buildCircularAvatar(url: user.photoURL, dimension: 45),
+          ),
+          // const Spacer(),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                user.displayName,
+                style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 18),
+              ),
+              Text(user.uid, style: TextStyle(color: Colors.grey[500])),
+            ],
+          )
+        ],
       ),
-      subtitle: Text(user.uid),
     );
   }
 
   /// Builds an info screen, that the user does not participate in a house hold where the user has admin privileges
   Widget _buildIneligibleInfo() {
-    return InfoActionWidget(
-      label:
-          "It looks like you don't have sufficient permissions in any of your households to add members. \n\n You can create a new household or get promoted in an existing one.",
-      buttonText: "CREATE A NEW HOUSEHOLD",
-      onTap: _onCreateNewTapped,
+    return Center(
+      child: InfoActionWidget(
+        label:
+            "It looks like you don't have sufficient permissions in any of your households to add members. \n\n You can create a new household or get promoted in an existing one.",
+        buttonText: "CREATE A NEW HOUSEHOLD",
+        onTap: _onCreateNewTapped,
+      ),
     );
   }
 
@@ -160,11 +177,13 @@ class _AddUserToHouseholdViewState extends State<AddUserToHouseholdView> {
       padding: const EdgeInsets.symmetric(horizontal: 8.0),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Text(
                     "Do you want to add this user to one of your households?",
@@ -175,7 +194,7 @@ class _AddUserToHouseholdViewState extends State<AddUserToHouseholdView> {
                 ],
               ),
               Padding(
-                padding: const EdgeInsets.only(top: 30.0),
+                padding: const EdgeInsets.only(top: 20.0),
                 child: Column(
                   children: [
                     Text(
