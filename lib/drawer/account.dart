@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:wgit/services/firebase/auth_service.dart';
+import 'package:wgit/util/components.dart';
 
 import 'account_manage_dialog.dart';
 
@@ -62,23 +63,7 @@ class _AccountWidgetState extends State<AccountWidget> {
           switch (state) {
             case AuthState.signedIn:
             case AuthState.signedOut:
-              return user == null
-                  ? Icon(
-                Icons.account_circle_outlined,
-                size: size,
-              )
-                  : CircleAvatar(
-                backgroundColor: Colors.grey[800],
-                radius: 45,
-                child: Padding(
-                  padding: const EdgeInsets.all(2.0),
-                  child: ClipOval(
-                    child: Image.network(
-                      user.photoURL,
-                    ),
-                  ),
-                ),
-              );
+              return buildCircularAvatar(url: user?.photoURL, dimension: 45);
             case AuthState.signingIn:
             case AuthState.signingOut:
               return const Padding(

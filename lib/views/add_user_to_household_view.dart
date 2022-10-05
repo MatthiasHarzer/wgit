@@ -39,11 +39,15 @@ class _AddUserToHouseholdViewState extends State<AddUserToHouseholdView> {
 
     selectedHousehold = widget.initialHousehold;
 
+
+
     _sub = firebaseService.availableHouseholds.listen((houseHolds) {
       if (mounted) {
+        // print("UPDATE AVAILABLE HOUSEHOLDS");
         setState(() {
           availableHouseholds =
               houseHolds.where((h) => h.thisUserIsAdmin).toList();
+          // print("${houseHolds.length} -> ${availableHouseholds.length}");
         });
       }
     });

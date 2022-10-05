@@ -421,7 +421,7 @@ class _AsyncQrImageLoaderState extends State<AsyncQrImageLoader> {
 }
 
 /// Builds a unified circular avatar from an [url] taking a [dimension] for height/width
-Widget buildCircularAvatar({required String url, required double dimension}) {
+Widget buildCircularAvatar({required String? url, required double dimension}) {
   return SizedBox.square(
     dimension: dimension,
     child: CircleAvatar(
@@ -429,10 +429,12 @@ Widget buildCircularAvatar({required String url, required double dimension}) {
       radius: 45,
       child: Padding(
         padding: const EdgeInsets.all(2.0),
-        child: ClipOval(
+        child: url == null ? const Icon(Icons.account_circle_outlined) : ClipOval(
             child: Image.network(
+              errorBuilder: (context, error, stackTrace) => const Icon(Icons.account_circle_outlined),
           url,
-        )),
+        ),
+        ),
       ),
     ),
   );

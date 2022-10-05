@@ -376,6 +376,15 @@ class HouseHold {
 
   bool get thisUserIsTheOnlyAdmin => thisUserIsAdmin && validAdmins.length == 1;
 
+  Completer ready = Completer();
+  Map<String, Completer> awaitReadyCompleter = {
+    "members": Completer(),
+    "groups": Completer(),
+    "activities": Completer(),
+    "memberData": Completer(),
+  };
+
+
   HouseHold._({
     required this.id,
     required this.name,
@@ -387,6 +396,7 @@ class HouseHold {
     /// members stream
     _subs.add(AppUser.usersStream.listen((event) {
       _members.add(event.where((m) => membersSnapshot.contains(m)).toList());
+      _setReadyOf("members");
     }));
 
     /// Groups stream
@@ -395,6 +405,7 @@ class HouseHold {
         .listen((snapshot) async {
       _groups.add(await Future.wait(
           [for (var doc in snapshot.docs) Group.fromDoc(doc, this)]));
+      _setReadyOf("groups");
     }));
 
     /// Activities stream
@@ -405,6 +416,7 @@ class HouseHold {
         .listen((snapshot) async {
       _activities.add(await Future.wait(
           [for (var doc in snapshot.docs) Activity.fromDoc(doc)]));
+      _setReadyOf("activities");
     }));
 
     /// Member data stream
@@ -413,12 +425,37 @@ class HouseHold {
         .listen((snapshot) async{
       _memberData.add(
           await Future.wait([for (var doc in snapshot.docs) HouseHoldMemberData.fromDoc(doc)]));
+      _setReadyOf("memberData");
     }));
 
     /// Keep the attribute up to date with member changes
     _members.listen((value) {
       members = value;
     });
+
+    // List<StreamSubscription> readySubs = [];
+    // Map<String, bool> isReady = {
+    //   "members": false,
+    //   "memberData": false,
+    //
+    // }
+    _awaitReady();
+  }
+
+  /// Completes the completer in [awaitReadyCompleter] with the given [key]
+  void _setReadyOf(String key){
+    Completer? cmp = awaitReadyCompleter[key];
+    if(cmp == null || cmp.isCompleted) return;
+    cmp.complete();
+    // if(awaitReadyCompleter[type]?.isCompleted) return;
+  }
+
+  /// Awaits all completers defined in [awaitReadyCompleter]
+  void _awaitReady() async {
+    await Future.wait([
+      for(var completer in awaitReadyCompleter.values) completer.future
+    ]);
+    ready.complete();
   }
 
   /// Updates this household with data from the given [doc]. Returns itself
@@ -434,6 +471,7 @@ class HouseHold {
     defaultGroup?.members = membersSnapshot;
     return this;
   }
+
 
   /// Determines if the given [user] is an admin in this household
   bool isUserAdmin(AppUser user) {
@@ -507,6 +545,7 @@ class HouseHold {
       final members = await AppUser.fromUids(data["members"].cast<String>());
 
       houseHold = HouseHold._(id: id, name: name, members: members);
+      await houseHold.ready.future;
       _cache[doc.id] = houseHold;
     } else {
       houseHold = await houseHold._updateWith(doc);

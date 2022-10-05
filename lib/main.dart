@@ -45,19 +45,24 @@ void main() async {
 
   // Get any initial links
   if (kIsWeb) {
-    runApp(const MyApp(initialLink: null));
+    runApp(const MyApp(initialUserId: null));
   } else {
     final PendingDynamicLinkData? initialLink =
         await FirebaseDynamicLinks.instance.getInitialLink();
-
-    runApp(MyApp(initialLink: initialLink));
+    String? uid;
+    if(initialLink != null){
+      Uri uri = initialLink.link;
+      uid = uri.queryParameters["user"];
+    }
+    uid = "2XYOJ10MmNgBP42aIh7nAukFsox1";
+    runApp(MyApp(initialUserId: uid));
   }
 }
 
 class MyApp extends StatelessWidget {
-  final PendingDynamicLinkData? initialLink;
+  final String? initialUserId;
 
-  const MyApp({required this.initialLink, super.key});
+  const MyApp({required this.initialUserId, super.key});
 
   // This widget is the root of your application.
   @override
@@ -113,22 +118,37 @@ class MyApp extends StatelessWidget {
 
           // displayColor: Colors.black
         ),
-        colorScheme: theme.colorScheme.copyWith(secondary: Colors.orange[700]));
+        colorScheme: theme.colorScheme.copyWith(secondary: Colors.orange[700]),
+    );
 
     return MaterialApp(
       title: 'WG IT',
       theme: theme,
       initialRoute: "/",
-      routes: {
-        "/": (context) => MainPage(initialLink: initialLink),
-      },
+      // routes: {
+      //   "/": (context) => MainPage(initialLink: initialLink),
+      // },
       // home: MainPage(
       //   initialLink: initialLink,
       // ),
       onGenerateRoute: (settings) {
-        print("settings");
-        print(settings);
+        String? initialUid = initialUserId;
+        try{
+          final route = settings.name ?? "";
+          final settingsUri = Uri.parse(route);
+          settings = settings.copyWith(name: route.split("?").first);
+          initialUid ??= settingsUri.queryParameters["user"];
+        }catch(e){
+          print("Couldn't parse uri ${settings.name}");
+          print(e);
+        }
 
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (context)=>MainPage(initialUserId: initialUid),
+        );
+
+        // return MainPage(initialLink: initialLink);
         // return NavigatorRoute.route(settings.name);
       },
     );
@@ -136,9 +156,9 @@ class MyApp extends StatelessWidget {
 }
 
 class MainPage extends StatefulWidget {
-  final PendingDynamicLinkData? initialLink;
+  final String? initialUserId;
 
-  const MainPage({required this.initialLink, super.key});
+  const MainPage({required this.initialUserId, super.key});
 
   @override
   State<MainPage> createState() => _MainPageState();
@@ -166,8 +186,8 @@ class _MainPageState extends State<MainPage> {
     });
 
     authService.onFirstSignIn(() {
-      if (widget.initialLink != null) {
-        _handleDynLink(widget.initialLink!);
+      if (widget.initialUserId != null) {
+        _handleInitialUid(widget.initialUserId!);
       }
     });
 
@@ -215,11 +235,12 @@ class _MainPageState extends State<MainPage> {
     );
   }
 
-  void _handleDynLink(PendingDynamicLinkData dynLink) async {
-    AppUser? dynUser = await firebaseService.resolveDynLinkUser(dynLink);
-    if (dynUser == null) return;
-    if (dynUser.uid == authService.currentUser?.uid) return;
-    _openAddUserToHouseholdDialog(dynUser);
+  void _handleInitialUid(String uid) async {
+    // Navigator.pu
+    AppUser? user = await AppUser.fromUid(uid);
+    if (user == null) return;
+    if (user.uid == authService.currentUser?.uid) return;
+    _openAddUserToHouseholdDialog(user);
   }
 
   void _switchToHousehold(HouseHold household) {
