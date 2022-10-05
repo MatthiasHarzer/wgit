@@ -36,10 +36,7 @@ void main() async {
   await authService.ensureInitialized();
   await firebaseService.ensureInitialized();
 
-
-
   // await AuthService.ensureInitialized();
-
 
   // String link = "https://wgit.page.link/GUDU";
   // String link = "https://wgit.page.link/k29C";
@@ -47,9 +44,9 @@ void main() async {
   //     await FirebaseDynamicLinks.instance.getDynamicLink(Uri.parse(link));
 
   // Get any initial links
-  if(kIsWeb){
+  if (kIsWeb) {
     runApp(const MyApp(initialLink: null));
-  }else{
+  } else {
     final PendingDynamicLinkData? initialLink =
         await FirebaseDynamicLinks.instance.getInitialLink();
 
@@ -67,7 +64,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     var primary = Colors.deepOrange;
     var accent = Colors.deepOrangeAccent;
-    
+
     var theme = ThemeData(
       dividerTheme: const DividerThemeData(thickness: 0.3, space: 1),
       iconTheme: IconThemeData(
@@ -75,25 +72,18 @@ class MyApp extends StatelessWidget {
       ),
       switchTheme: SwitchThemeData(
         thumbColor: MaterialStateProperty.resolveWith((states) =>
-            states.contains(MaterialState.selected)
-                ? accent
-                : null),
+            states.contains(MaterialState.selected) ? accent : null),
         trackColor: MaterialStateProperty.resolveWith((states) =>
-            states.contains(MaterialState.selected)
-                ? primary[500]
-                : null),
+            states.contains(MaterialState.selected) ? primary[500] : null),
       ),
       appBarTheme: AppBarTheme(
         backgroundColor: primary[700],
       ),
-
       textButtonTheme: TextButtonThemeData(
         style: ButtonStyle(
           textStyle: MaterialStateProperty.all(
             TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: primary),
+                fontSize: 16, fontWeight: FontWeight.w500, color: primary),
           ),
         ),
       ),
@@ -112,15 +102,14 @@ class MyApp extends StatelessWidget {
         contentTextStyle: TextStyle(color: Colors.grey[200]),
         actionTextColor: accent,
       ),
-      checkboxTheme: CheckboxThemeData(
-        fillColor: MaterialStateProperty.all(accent)
-      ),
+      checkboxTheme:
+          CheckboxThemeData(fillColor: MaterialStateProperty.all(accent)),
       primarySwatch: primary,
       brightness: Brightness.dark,
     );
     theme = theme.copyWith(
         textTheme: theme.textTheme.apply(
-          bodyColor: Colors.grey[300],
+          bodyColor: Colors.grey[200],
 
           // displayColor: Colors.black
         ),
@@ -129,9 +118,19 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'WG IT',
       theme: theme,
-      home: MainPage(
-        initialLink: initialLink,
-      ),
+      initialRoute: "/",
+      routes: {
+        "/": (context) => MainPage(initialLink: initialLink),
+      },
+      // home: MainPage(
+      //   initialLink: initialLink,
+      // ),
+      onGenerateRoute: (settings) {
+        print("settings");
+        print(settings);
+
+        // return NavigatorRoute.route(settings.name);
+      },
     );
   }
 }
@@ -156,8 +155,10 @@ class _MainPageState extends State<MainPage> {
   void initState() {
     super.initState();
 
+    print(Uri.base.toString());
+
     authService.appUserStream.listen((AppUser? user) {
-      if(user == null){
+      if (user == null) {
         setState(() {
           _currentHousehold = null;
         });

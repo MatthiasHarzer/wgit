@@ -29,6 +29,8 @@ class _CreateOrEditGroupDialogState extends State<_CreateOrEditGroupDialog> {
   bool working = false;
   bool deleteWorking = false;
 
+  bool get isDefaultGroup => group.isDefault;
+
   HouseHold get houseHold => group.houseHold;
 
   @override
@@ -70,23 +72,27 @@ class _CreateOrEditGroupDialogState extends State<_CreateOrEditGroupDialog> {
     _close();
   }
 
-  void _deletePressed()async{
-    if(deleteWorking) return;
+  void _deletePressed() async {
+    if (deleteWorking) return;
     setState(() {
-      deleteWorking  = true;
+      deleteWorking = true;
     });
-      var dialog = ConfirmDialog(context: context,
-      title: "Delete group \"${group.name}\"?", confirm: "DELETE")..show();
+    var dialog = ConfirmDialog(
+        context: context,
+        title: "Delete group \"${group.name}\"?",
+        confirm: "DELETE")
+      ..show();
 
-      final confirm = await dialog.future;
+    final confirm = await dialog.future;
 
-      if(confirm){
-        await firebaseService.deleteGroup(houseHoldId: houseHold.id, groupId: group.id);
-        _close();
-      }
+    if (confirm) {
+      await firebaseService.deleteGroup(
+          houseHoldId: houseHold.id, groupId: group.id);
+      _close();
+    }
 
     setState(() {
-      deleteWorking  = false;
+      deleteWorking = false;
     });
   }
 
@@ -95,21 +101,23 @@ class _CreateOrEditGroupDialogState extends State<_CreateOrEditGroupDialog> {
 
     return CheckboxListTile(
       title: Text(user.displayName),
-      onChanged: (v) {
-        setState(() {
-          isActive = v ?? isActive;
+      onChanged: group.isDefault
+          ? null
+          : (v) {
+              setState(() {
+                isActive = v ?? isActive;
 
-          if (isActive) {
-            if (!group.members.contains(user)) {
-              group.members.add(user);
-            }
-          } else {
-            if (group.members.contains(user)) {
-              group.members.remove(user);
-            }
-          }
-        });
-      },
+                if (isActive) {
+                  if (!group.members.contains(user)) {
+                    group.members.add(user);
+                  }
+                } else {
+                  if (group.members.contains(user)) {
+                    group.members.remove(user);
+                  }
+                }
+              });
+            },
       value: isActive,
     );
   }
@@ -143,33 +151,37 @@ class _CreateOrEditGroupDialogState extends State<_CreateOrEditGroupDialog> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    const Text(
                       "MEMBERS",
-                      style: TextStyle(
-                          fontWeight: FontWeight.w500, color: Colors.grey[400]),
+                      style: TextStyle(fontWeight: FontWeight.w500),
+                    ),
+                    Visibility(
+                      visible: isDefaultGroup,
+                      child: Text(
+                        "This is the default group of this household containing all members.",
+                        style: TextStyle(color: Colors.grey[400]),
+                      ),
                     ),
                     SizedBox(
                       height: 300,
                       width: 400,
                       child: StreamBuilder(
-                        stream: houseHold.membersStream,
-                        builder: (context, snapshot) {
-                          final members = snapshot.data ?? [];
-                          return ListView(
-                            children: [
-                              for (var member in members)
-                                _buildUserSelect(member),
-                            ],
-                          );
-                        }
-                      ),
+                          stream: houseHold.membersStream,
+                          builder: (context, snapshot) {
+                            final members = snapshot.data ?? [];
+                            return ListView(
+                              children: [
+                                for (var member in members)
+                                  _buildUserSelect(member),
+                              ],
+                            );
+                          }),
                     ),
-
                   ],
                 ),
               ),
               Visibility(
-                visible: widget.isEdit,
+                visible: widget.isEdit && !isDefaultGroup,
                 child: TextButton(
                   onPressed: _deletePressed,
                   child: Row(
@@ -188,9 +200,13 @@ class _CreateOrEditGroupDialogState extends State<_CreateOrEditGroupDialog> {
                           ),
                         ),
                       ),
-                      Text("DELETE GROUP", style: TextStyle(color: Theme.of(context).errorColor),),
+                      Text(
+                        "DELETE GROUP",
+                        style: TextStyle(color: Theme.of(context).errorColor),
+                      ),
                     ],
-                  ),),
+                  ),
+                ),
               ),
             ],
           ),
@@ -253,6 +269,7 @@ class _ManageMemberGroupsViewState extends State<ManageMemberGroupsView> {
     // });
   }
 
+  /// Opens the edit dialog for the given [group]. If it is null, a new group will be created
   void _editOrNewGroupTapped({Group? group}) {
     bool isEdit = group != null;
     group ??= Group.temp(houseHold);
@@ -277,25 +294,23 @@ class _ManageMemberGroupsViewState extends State<ManageMemberGroupsView> {
         child: Column(
           children: [
             StreamBuilder(
-              stream: houseHold.groupsStream,
-              builder: (context, snapshot) {
-                final groups = snapshot.data ?? [];
-                return Column(
-                  children: [
-                    for (var group in groups)
-                      buildGroupListTile(
-                        group: group,
-                        action: IconButton(
-                          onPressed: group.isDefault
-                              ? null
-                              : () => _editOrNewGroupTapped(group: group),
-                          icon: const Icon(Icons.edit),
+                stream: houseHold.groupsStream,
+                builder: (context, snapshot) {
+                  final groups = snapshot.data ?? [];
+                  return Column(
+                    children: [
+                      for (var group in groups)
+                        buildGroupListTile(
+                          group: group,
+                          action: IconButton(
+                            onPressed: () =>
+                                _editOrNewGroupTapped(group: group),
+                            icon: const Icon(Icons.edit),
+                          ),
                         ),
-                      ),
-                  ],
-                );
-              }
-            ),
+                    ],
+                  );
+                }),
             TextButton(
                 onPressed: () => _editOrNewGroupTapped(),
                 child: const Text("ADD GROUP"))
