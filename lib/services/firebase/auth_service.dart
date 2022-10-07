@@ -132,6 +132,8 @@ class AuthService {
 
     if (u == null) {
       _authState.add(AuthState.signedOut);
+    }else{
+      _authState.add(AuthState.signedIn);
     }
 
     return u != null;
