@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:wgit/services/firebase/firebase_service.dart';
-import 'package:wgit/services/types.dart';
 import 'package:wgit/views/add_or_create_household/base.dart';
 
+import '../../types/household.dart';
 import '../theme.dart';
 import '../util/util.dart';
 

@@ -3,7 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:wgit/services/firebase/firebase_service.dart';
 
-import '../services/types.dart';
+import '../../types/household.dart';
+import '../types/activity.dart';
+import '../types/app_user.dart';
+import '../types/group.dart';
 import '../util/components.dart';
 import '../util/util.dart';
 

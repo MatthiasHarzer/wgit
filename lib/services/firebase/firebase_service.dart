@@ -7,8 +7,10 @@ import 'package:rxdart/rxdart.dart';
 import 'package:wgit/secrets.dart';
 import 'package:wgit/util/consts.dart';
 
+import '../../types/activity.dart';
+import '../../types/app_user.dart';
+import '../../types/household.dart';
 import '../../util/util.dart';
-import '../types.dart';
 import 'auth_service.dart';
 import 'firebase_ref_service.dart';
 

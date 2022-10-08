@@ -3,7 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:wgit/util/components.dart';
 
-import '../../services/types.dart';
+import '../../types/household.dart';
 
 class MemberGroupsSnippet extends StatefulWidget {
   final HouseHold houseHold;

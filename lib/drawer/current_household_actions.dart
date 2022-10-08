@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:wgit/services/firebase/firebase_service.dart';
 
-import '../services/types.dart';
+import '../../types/household.dart';
 import '../util/components.dart';
 import '../util/util.dart';
 import '../views/household/manage_members_view.dart';

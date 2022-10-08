@@ -5,7 +5,8 @@ import 'package:get_it/get_it.dart';
 import 'package:wgit/util/components.dart';
 
 import '../services/firebase/firebase_service.dart';
-import '../services/types.dart';
+import '../../types/household.dart';
+import '../types/app_user.dart';
 import '../util/util.dart';
 import 'add_or_create_household/base.dart';
 

@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:wgit/services/firebase/auth_service.dart';
 import 'package:wgit/services/firebase/firebase_service.dart';
-import 'package:wgit/services/types.dart';
 
+import '../../types/household.dart';
 import '../../util/components.dart';
 
 final getIt = GetIt.I;

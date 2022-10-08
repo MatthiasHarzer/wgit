@@ -3,7 +3,9 @@ import 'package:get_it/get_it.dart';
 import 'package:wgit/services/firebase/firebase_service.dart';
 import 'package:wgit/util/components.dart';
 
-import '../../services/types.dart';
+import '../../types/app_user.dart';
+import '../../types/group.dart';
+import '../../types/household.dart';
 
 final getIt = GetIt.I;
 

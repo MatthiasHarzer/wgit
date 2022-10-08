@@ -6,7 +6,8 @@ import 'package:wgit/views/household/manage_member_groups.dart';
 import 'package:wgit/views/household/manage_members_view.dart';
 
 import '../../services/config_service.dart';
-import '../../services/types.dart';
+import '../../types/app_user.dart';
+import '../../types/household.dart';
 import '../../util/util.dart';
 import 'household_activities_view.dart';
 import 'household_members_snippet.dart';

@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:wgit/util/extensions.dart';
 
-import '../../services/types.dart';
+import '../../types/activity.dart';
+import '../../types/household.dart';
 import '../../util/util.dart';
 import '../edit_or_new_activity.dart';
+import '../../util/extensions.dart';
 
 class HouseHoldActivitiesView extends StatefulWidget {
   final HouseHold houseHold;

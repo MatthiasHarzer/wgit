@@ -6,8 +6,8 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:wgit/services/config_service.dart';
 import 'package:wgit/util/util.dart';
 
-import '../services/types.dart';
 import '../theme.dart';
+import '../types/group.dart';
 
 /// A dialog to confirm an action with a submit and cancel button
 class ConfirmDialog {

@@ -6,7 +6,6 @@ import 'package:url_strategy/url_strategy.dart';
 import 'package:wgit/services/config_service.dart';
 import 'package:wgit/services/firebase/auth_service.dart';
 import 'package:wgit/services/firebase/firebase_service.dart';
-import 'package:wgit/services/types.dart';
 import 'package:wgit/util/components.dart';
 import 'package:wgit/util/util.dart';
 import 'package:wgit/views/add_or_create_household/base.dart';
@@ -15,9 +14,14 @@ import 'package:wgit/views/edit_or_new_activity.dart';
 import 'package:wgit/views/household/household_view.dart';
 import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
 
+import '../../types/household.dart';
+import '../../types/app_user.dart';
+
+
 import 'drawer/drawer.dart';
 import 'firebase_options.dart';
 import 'theme.dart';
+import 'types/app_user.dart';
 
 final getIt = GetIt.instance;
 

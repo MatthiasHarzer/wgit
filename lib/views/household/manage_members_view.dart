@@ -3,9 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:wgit/services/firebase/auth_service.dart';
 import 'package:wgit/services/firebase/firebase_service.dart';
-import 'package:wgit/services/types.dart';
 import 'package:wgit/views/qr_code_scan_view.dart';
 
+import '../../types/app_user.dart';
+import '../../types/household.dart';
 import '../../util/components.dart';
 import '../../util/util.dart';
 import '../add_user_to_household_view.dart';

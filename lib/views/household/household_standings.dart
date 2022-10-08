@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:wgit/util/components.dart';
 
-import '../../services/types.dart';
+import '../../types/app_user.dart';
+import '../../types/household.dart';
 import '../../util/util.dart';
 
 class _HouseHoldStandingsItem extends StatefulWidget {

@@ -6,7 +6,8 @@ import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:rxdart/rxdart.dart';
 
-import '../types.dart';
+import '../../types/app_user.dart';
+import '../../types/household.dart';
 
 enum AuthState { signedIn, signedOut, signingIn, signingOut }
 

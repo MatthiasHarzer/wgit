@@ -5,7 +5,7 @@ import 'package:wgit/drawer/account.dart';
 import 'package:wgit/services/config_service.dart';
 import 'package:wgit/services/firebase/auth_service.dart';
 
-import '../services/types.dart';
+import '../../types/household.dart';
 import '../util/components.dart';
 import 'households_widget.dart';
 

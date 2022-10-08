@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:wgit/services/types.dart';
+
+import '../../types/app_user.dart';
+import '../../types/household.dart';
 
 import '../../util/components.dart';
 

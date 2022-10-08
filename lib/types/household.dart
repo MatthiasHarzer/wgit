@@ -1,171 +1,20 @@
-// ignore_for_file: constant_identifier_names, avoid_function_literals_in_foreach_calls
 import 'dart:async';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:collection/collection.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get_it/get_it.dart';
 import 'package:rxdart/rxdart.dart';
-import 'package:wgit/services/firebase/auth_service.dart';
-import 'package:wgit/services/firebase/firebase_ref_service.dart';
-import 'package:wgit/services/firebase/firebase_service.dart';
+
+import '../services/firebase/auth_service.dart';
+import '../services/firebase/firebase_ref_service.dart';
+import '../services/firebase/firebase_service.dart';
+import 'activity.dart';
+import 'app_user.dart';
+import 'group.dart';
 
 final getIt = GetIt.I;
 final authService = getIt<AuthService>();
 final firebaseService = getIt<FirebaseService>();
-
-/// An activity is an expense shared by multiple [AppUsers]
-class Activity {
-  String? id;
-  String label;
-  DateTime? date;
-  Map<AppUser, double> contributions;
-  String? groupId;
-
-  double get total => contributions.values.fold(0, (p, c) => p + c);
-
-  double getContributionOf(AppUser user) {
-    return contributions[user] ?? 0;
-  }
-
-  Activity._(
-      {required this.label,
-      required this.contributions,
-      this.date,
-      this.id,
-      this.groupId});
-
-  /// Creates an activity from a document snapshot
-  static Future<Activity> fromDoc(DocumentSnapshot doc) async {
-    var id = doc.id;
-
-    var data = doc.data() as Map<String, dynamic>;
-
-    var label = data["label"];
-    var date = data["timestamp"]?.toDate() ?? DateTime.now();
-
-    var group = data["groupId"] ?? "all";
-
-    var raw = data["contributions"] as Map<String, dynamic>;
-    Map<String, double> contr = raw.cast<String, double>();
-
-    Map<AppUser, double> contributions = {};
-    for (var entry in contr.entries) {
-      var user = await AppUser.fromUid(entry.key);
-      if (user == null) continue;
-
-      contributions[user] = entry.value;
-    }
-
-    return Activity._(
-        id: id,
-        label: label,
-        contributions: contributions,
-        date: date,
-        groupId: group);
-  }
-
-  Activity.empty() : this._(contributions: {}, label: "");
-
-  Activity.temp({
-    required this.label,
-    required this.contributions,
-  }) {
-    date = DateTime.now();
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      "label": label,
-      "contributions":
-          contributions.map((key, value) => MapEntry(key.uid, value)),
-      "total": total,
-      "groupId": groupId,
-    };
-  }
-
-  Activity copy() {
-    return Activity._(
-        id: id,
-        contributions: Map.of(contributions),
-        label: label,
-        date: date,
-        groupId: groupId);
-  }
-
-  @override
-  String toString() {
-    return "Action<$label @$id on $date with $contributions>";
-  }
-}
-
-/// A group consists of a subset of [AppUsers] from one [HouseHold] members, sharing financials
-class Group {
-  late final String id;
-  late String name;
-  late List<AppUser> members;
-  late final HouseHold houseHold;
-
-  bool get isDefault => id == "all";
-
-  Group._({
-    required this.id,
-    required this.name,
-    required this.members,
-    required this.houseHold,
-  }) {
-    if (id == "all") {
-      members = houseHold.membersSnapshot;
-    }
-  }
-
-  Group.createDefault({required this.houseHold}) {
-    id = "all";
-    name = "Default";
-    members = [...houseHold.membersSnapshot];
-  }
-
-  Group.temp(HouseHold houseHold)
-      : this._(
-            id: "",
-            name: "",
-            members: List.empty(growable: true),
-            houseHold: houseHold);
-
-  Group copy() {
-    return Group._(
-      houseHold: houseHold,
-      members: members,
-      id: id,
-      name: name,
-    );
-  }
-
-  // static Map<String, Group>
-  //
-  // static getCachedAndUpdateFromDocOrCreateNew(DocumentSnapshot doc, HouseHold houseHold){
-  //
-  // }
-
-  static Future<Group> fromDoc(
-      DocumentSnapshot doc, HouseHold houseHold) async {
-    var id = doc.id;
-
-    var data = doc.data() as Map<String, dynamic>;
-
-    var name = data["name"];
-    var members = await AppUser.fromUids(data["members"].cast<String>());
-
-    members =
-        members.where((m) => houseHold.membersSnapshot.contains(m)).toList();
-
-    if (id == "all") {
-      members = [...houseHold.membersSnapshot];
-    }
-
-    return Group._(
-        id: id, name: name, members: members.toList(), houseHold: houseHold);
-  }
-}
 
 /// A users role in a [HouseHold]
 class Role {
@@ -175,113 +24,6 @@ class Role {
   static String get(String role) {
     if (role == ADMIN) return ADMIN;
     return MEMBER;
-  }
-}
-
-/// An app user
-class AppUser {
-  late final String uid;
-  late String displayName;
-  late String photoURL;
-  String? dynLink;
-
-  bool get isSelf => uid == authService.currentUser?.uid;
-
-  final BehaviorSubject<AppUser> _thisUser = BehaviorSubject();
-
-  Future<String> getDynLink() async {
-    if (dynLink == null) {
-      dynLink = await firebaseService.createDynamicLinkFor(user: this);
-      await firebaseService.modifyUser(uid: uid, dynLink: dynLink);
-    }
-    return dynLink!;
-  }
-
-  /// Creates an instance from a [DocumentSnapshot]
-  AppUser._fromDoc(DocumentSnapshot doc) {
-    Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
-
-    uid = doc.id;
-    displayName = data["displayName"] ?? "(Unnamed)";
-    photoURL = data["photoURL"];
-    dynLink = data["dynLink"];
-  }
-
-  AppUser.empty() {
-    uid = "";
-    displayName = "";
-    photoURL = "";
-  }
-
-  /// Updated the attributed with the data from the given [DocumentSnapshot]
-  AppUser _modifyWith({required DocumentSnapshot doc}) {
-    Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
-
-    displayName = data["displayName"] ?? displayName;
-    photoURL = data["photoURL"] ?? photoURL;
-    dynLink = data["dynLink"] ?? dynLink;
-
-    return this;
-  }
-
-  static final Map<String, AppUser> _cache = {};
-  static final BehaviorSubject<List<AppUser>> _users =
-      BehaviorSubject.seeded([]);
-
-  // static final List<AppUser2> _allUsers = [];
-
-  static Stream<List<AppUser>> get usersStream => _users.stream;
-
-  /// Tries to get a cached instance and update in with the doc data or create a new instance with the doc data
-  static AppUser _getCachedAndUpdateFromDocOrCreateNew(DocumentSnapshot doc) {
-    AppUser? user = _cache[doc.id];
-
-    if (user == null) {
-      user = AppUser._fromDoc(doc);
-      _cache[doc.id] = user;
-    } else {
-      user = user._modifyWith(doc: doc);
-    }
-    user._thisUser.add(user);
-    _users.add(_cache.values.toList());
-
-    return user;
-  }
-
-  /// Resolved an user from a given [uid]
-  static Future<AppUser?> fromUid(String uid) async {
-    if (_cache.containsKey(uid)) return _cache[uid]!;
-
-    final ref = RefService.refOf(uid: uid);
-
-    final completer = Completer<AppUser?>();
-
-    final sub = ref.snapshots().listen((doc) {
-      if (!doc.exists) {
-        if (!completer.isCompleted) {
-          completer.complete(null);
-        }
-        return;
-      }
-      final user = _getCachedAndUpdateFromDocOrCreateNew(doc);
-      if (!completer.isCompleted) {
-        completer.complete(user);
-      }
-    });
-
-    return completer.future;
-  }
-
-  /// Returns a list of users matching the [uids]
-  static Future<List<AppUser>> fromUids(Iterable<String> uids) async {
-    return (await Future.wait([for (var uid in uids) fromUid(uid)]))
-        .whereType<AppUser>()
-        .toList();
-  }
-
-  @override
-  String toString() {
-    return "AppUser<$displayName @$uid>";
   }
 }
 
@@ -296,9 +38,9 @@ class HouseHoldMemberData {
 
   HouseHoldMemberData._(
       {required this.user,
-      required this.totalShouldPay,
-      required this.totalPaid,
-      this.role = "member"});
+        required this.totalShouldPay,
+        required this.totalPaid,
+        this.role = "member"});
 
   HouseHoldMemberData.emptyOf(AppUser user) {
     user = user;
@@ -314,10 +56,10 @@ class HouseHoldMemberData {
       var data = doc.data() as Map<String, dynamic>;
 
       return HouseHoldMemberData._(
-          user: await AppUser.fromUid(doc.id) ?? AppUser.empty(),
-          totalShouldPay: data["totalShouldPay"]?.toDouble() ?? 0,
-          totalPaid: data["totalPaid"]?.toDouble() ?? 0,
-          role: data["role"] ?? Role.MEMBER,
+        user: await AppUser.fromUid(doc.id) ?? AppUser.empty(),
+        totalShouldPay: data["totalShouldPay"]?.toDouble() ?? 0,
+        totalPaid: data["totalPaid"]?.toDouble() ?? 0,
+        role: data["role"] ?? Role.MEMBER,
       );
     }
   }
@@ -343,9 +85,9 @@ class HouseHold {
 
   final BehaviorSubject<List<Group>> _groups = BehaviorSubject.seeded([]);
   final BehaviorSubject<List<Activity>> _activities =
-      BehaviorSubject.seeded([]);
+  BehaviorSubject.seeded([]);
   final BehaviorSubject<List<HouseHoldMemberData>> _memberData =
-      BehaviorSubject.seeded([]);
+  BehaviorSubject.seeded([]);
   final BehaviorSubject<List<AppUser>> _members = BehaviorSubject.seeded([]);
 
   Stream<List<AppUser>> get membersStream => _members.stream;
@@ -502,8 +244,8 @@ class HouseHold {
   /// Adjusts the [from] and [to] users paid/shouldPay amount to ...
   Future exchangeMoney(
       {required AppUser from,
-      required AppUser to,
-      required double amount}) async {
+        required AppUser to,
+        required double amount}) async {
     var fromMemberData = memberDataOf(member: from);
     var toMemberData = memberDataOf(member: to);
 
@@ -559,7 +301,7 @@ class HouseHold {
 
   static Future clearAll()async{
     for(var cached in _cache.values){
-     await  cached.cancelAll();
+      await  cached.cancelAll();
     }
     _cache.clear();
 
