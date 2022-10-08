@@ -40,22 +40,6 @@ class _HouseholdsWidgetState extends State<HouseholdsWidget> {
     );
   }
 
-  /// Builds an item containing an icon and a text
-  Widget _buildItem(
-      {required IconData icon, required String text, VoidCallback? onTap}) {
-    return ListTile(
-      leading: Icon(
-        icon,
-        color: itemTextStyle.color,
-        size: (itemTextStyle.fontSize! * 1.5),
-      ),
-      onTap: onTap,
-      title: Text(
-        text,
-        style: itemTextStyle,
-      ),
-    );
-  }
 
   /// Build all available households from the [firebaseService.availableHouseholds] stream
   Widget _buildHouseholds() {
@@ -63,13 +47,13 @@ class _HouseholdsWidgetState extends State<HouseholdsWidget> {
       stream: firebaseService.availableHouseholds,
       builder: (context, snapshot) {
         return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             for (var household in snapshot.data ?? [])
-              _buildItem(
-                icon: Icons.home_outlined,
-                text: household.name,
-                onTap: () => _switchTo(household),
-              )
+              TextButton.icon(
+                  onPressed: () => _switchTo(household),
+                  label: Text(household.name),
+                  icon: const Icon(Icons.home_outlined)),
           ],
         );
       },
@@ -78,14 +62,23 @@ class _HouseholdsWidgetState extends State<HouseholdsWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildHouseholds(),
-        const Divider(height: 4),
-        _buildItem(
-            icon: Icons.add, text: "Add New Household", onTap: _onNewTaped),
-      ],
+    return Padding(
+      padding: const EdgeInsets.only(left: 18.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildHouseholds(),
+          const Divider(height: 4, endIndent: 18),
+          TextButton.icon(
+              onPressed: _onNewTaped,
+              label: Text(
+                "Add New Household",
+                style: TextStyle(color: Colors.grey[300]),
+              ),
+              icon: Icon(Icons.add, color: Colors.grey[300]),
+          ),
+        ],
+      ),
     );
   }
 }

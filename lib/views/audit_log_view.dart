@@ -39,7 +39,7 @@ class _AuditLogViewItemState extends State<_AuditLogViewItem> {
       child: ListTile(
         leading: ConstrainedBox(
           constraints:
-              const BoxConstraints(minHeight: double.infinity, maxWidth: 70),
+              const BoxConstraints(minHeight: double.infinity, maxWidth: 40),
           child: Align(
               alignment: Alignment.center,
               child: Icon(log.icon),
