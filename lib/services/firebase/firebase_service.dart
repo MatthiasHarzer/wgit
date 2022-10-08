@@ -63,7 +63,7 @@ class FirebaseService {
 
     await addAuditLogItem(
         AuditLogItem.byMe(
-          type: AuditLogType.ADD_MEMBER,
+          type: AuditLogType.addMember,
           data: {
             "member": user.uid,
           }
@@ -83,10 +83,10 @@ class FirebaseService {
 
     await addAuditLogItem(
         AuditLogItem.byMe(
-          type: AuditLogType.PROMOTE_MEMBER,
+          type: AuditLogType.promoteMember,
           data: {
-            "promoted_member": member.uid,
-            "new_role": Role.ADMIN,
+            "members": member.uid,
+            "role": Role.ADMIN,
           }
         ),
         houseHoldId: houseHold.id);
@@ -132,7 +132,7 @@ class FirebaseService {
 
     await addAuditLogItem(
         AuditLogItem.byMe(
-          type: AuditLogType.REMOVE_MEMBER,
+          type: AuditLogType.removeMember,
           data: {
             "member": member.uid
           }
@@ -198,7 +198,7 @@ class FirebaseService {
 
     await addAuditLogItem(
         AuditLogItem.byMe(
-          type: AuditLogType.ADD_ACTIVITY,
+          type: AuditLogType.addActivity,
           data: {
             "id": doc.id,
             "contributions": activity.contributions.map((key, value) => MapEntry(key.uid, value)),
@@ -246,7 +246,7 @@ class FirebaseService {
 
     await addAuditLogItem(
         AuditLogItem.byMe(
-            type: AuditLogType.EDIT_ACTIVITY,
+            type: AuditLogType.editActivity,
             data: {
               "id": activity.id,
               "contributions": activity.contributions.map((key, value) => MapEntry(key.uid, value)),
@@ -285,7 +285,7 @@ class FirebaseService {
 
       await addAuditLogItem(
           AuditLogItem.byMe(
-              type: AuditLogType.EDIT_GROUP,
+              type: AuditLogType.editGroup,
               data: {
                 "id": groupId,
                 "name": name,
@@ -301,7 +301,7 @@ class FirebaseService {
     });
     await addAuditLogItem(
         AuditLogItem.byMe(
-          type: AuditLogType.ADD_GROUP,
+          type: AuditLogType.addGroup,
           data: {
             "id": doc.id,
             "name": name,
@@ -319,7 +319,7 @@ class FirebaseService {
 
     await addAuditLogItem(
         AuditLogItem.byMe(
-            type: AuditLogType.REMOVE_GROUP,
+            type: AuditLogType.removeGroup,
             data:{
               "id": group.id,
               "name": group.name,

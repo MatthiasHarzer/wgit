@@ -22,6 +22,7 @@ import 'drawer/drawer.dart';
 import 'firebase_options.dart';
 import 'theme.dart';
 import 'types/app_user.dart';
+import 'types/audit_log_item.dart';
 
 final getIt = GetIt.instance;
 
@@ -42,6 +43,10 @@ void main() async {
   await firebaseService.ensureInitialized();
 
   setPathUrlStrategy();
+
+
+
+
 
   // await AuthService.ensureInitialized();
 

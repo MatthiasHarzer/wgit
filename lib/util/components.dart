@@ -469,3 +469,37 @@ Widget buildGroupListTile({required Group group, Widget? action}) {
     trailing: action,
   );
 }
+
+/// Builds a text with highlighted parts. Depending on the index in the [text] (odd/even),
+/// the text will be normal or colored. This behaviour can be manipulated with the [startOdd] flag
+Widget buildTextWithHighlights(List<String> text, {bool startOdd = false, TextStyle? highlightStyle, TextStyle? defaultTextStle}){
+  highlightStyle ??= TextStyle(
+    color: theme.colorScheme.primary
+  );
+  List<TextSpan> children = [];
+  final div = startOdd ? 1 : 0;
+
+  for(var part in text){
+    part += " ";
+    if(children.length % 2 == div){
+      children.add(
+          TextSpan(text: part)
+      );
+    }else{
+      children.add(
+          TextSpan(
+            text: part,
+            style: highlightStyle
+          )
+      );
+    }
+  }
+  return RichText(
+    text: TextSpan(
+      style: defaultTextStle,
+      children: children
+    ),
+  );
+
+
+}

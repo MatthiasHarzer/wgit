@@ -176,6 +176,16 @@ class HouseHold {
       _setReadyOf("memberData");
     }));
 
+    /// Audit log stream
+    _subs.add(RefService.auditLogRefOf(houseHoldId: id)
+        .limit(50)
+        .orderBy("timestamp", descending: true)
+        .snapshots()
+        .listen((snapshot) async {
+      _auditLog.add(await Future.wait(
+          [for (var doc in snapshot.docs) AuditLogItem.fromDoc(doc, houseHold: this)]));
+    }));
+
     /// Keep the attribute up to date with member changes
     _members.listen((value) {
       members = value;
@@ -246,6 +256,12 @@ class HouseHold {
     return _groups.value.firstWhereOrNull((g) => g.id == groupId);
   }
 
+  /// Retunrs the activity with the given id if it exists
+  Activity? findActivity(String? activityId){
+    if(activityId == null) return null;
+    return _activities.value.firstWhereOrNull((a)=>a.id==activityId);
+  }
+
   /// Adjusts the [from] and [to] users paid/shouldPay amount to ...
   Future exchangeMoney(
       {required AppUser from,
@@ -266,7 +282,7 @@ class HouseHold {
 
     await firebaseService.addAuditLogItem(
       AuditLogItem.byMe(
-          type: AuditLogType.SEND_MONEY,
+          type: AuditLogType.sendMoney,
           data: {"from": from.uid, "to": to.uid, "amount": amount}),
       houseHoldId: id,
     );
