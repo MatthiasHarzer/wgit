@@ -57,6 +57,12 @@ class RefService {
     return groupsRefOf(houseHoldId: houseHoldId).doc(groupId);
   }
 
+  static CollectionReference auditLogRefOf({required String houseHoldId}){
+    return refOf(houseHoldId: houseHoldId).collection("audit-log");
+  }
+
+  // static DocumentReference
+
 
   /// Gets users information by its user id
   // static Future<AppUser?> resolveUid(String uid) async {

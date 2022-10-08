@@ -1,9 +1,10 @@
 import 'dart:async';
 
-import 'package:collection/collection.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:collection/collection.dart';
 import 'package:get_it/get_it.dart';
 import 'package:rxdart/rxdart.dart';
+import 'package:wgit/types/audit_log_item.dart';
 
 import '../services/firebase/auth_service.dart';
 import '../services/firebase/firebase_ref_service.dart';
@@ -38,9 +39,9 @@ class HouseHoldMemberData {
 
   HouseHoldMemberData._(
       {required this.user,
-        required this.totalShouldPay,
-        required this.totalPaid,
-        this.role = "member"});
+      required this.totalShouldPay,
+      required this.totalPaid,
+      this.role = "member"});
 
   HouseHoldMemberData.emptyOf(AppUser user) {
     user = user;
@@ -85,10 +86,12 @@ class HouseHold {
 
   final BehaviorSubject<List<Group>> _groups = BehaviorSubject.seeded([]);
   final BehaviorSubject<List<Activity>> _activities =
-  BehaviorSubject.seeded([]);
+      BehaviorSubject.seeded([]);
   final BehaviorSubject<List<HouseHoldMemberData>> _memberData =
-  BehaviorSubject.seeded([]);
+      BehaviorSubject.seeded([]);
   final BehaviorSubject<List<AppUser>> _members = BehaviorSubject.seeded([]);
+  final BehaviorSubject<List<AuditLogItem>> _auditLog =
+      BehaviorSubject.seeded([]);
 
   Stream<List<AppUser>> get membersStream => _members.stream;
 
@@ -98,6 +101,8 @@ class HouseHold {
 
   Stream<List<HouseHoldMemberData>> get membersDataStream => _memberData.stream;
 
+  Stream<List<AuditLogItem>> get auditLogStream => _auditLog.stream;
+
   List<AppUser> get membersSnapshot => _members.value;
 
   List<Group> get groupsSnapshot => _groups.value;
@@ -105,6 +110,8 @@ class HouseHold {
   List<Activity> get activitiesSnapshot => _activities.value;
 
   List<HouseHoldMemberData> get membersDataSnapshot => _memberData.value;
+
+  List<AuditLogItem> get auditLogSnapshot => _auditLog.value;
 
   Group? get defaultGroup => _groups.value.firstWhereOrNull((g) => g.isDefault);
 
@@ -125,7 +132,6 @@ class HouseHold {
     "activities": Completer(),
     "memberData": Completer(),
   };
-
 
   HouseHold._({
     required this.id,
@@ -164,9 +170,9 @@ class HouseHold {
     /// Member data stream
     _subs.add(RefService.membersDataRefOf(houseHoldId: id)
         .snapshots()
-        .listen((snapshot) async{
-      _memberData.add(
-          await Future.wait([for (var doc in snapshot.docs) HouseHoldMemberData.fromDoc(doc)]));
+        .listen((snapshot) async {
+      _memberData.add(await Future.wait(
+          [for (var doc in snapshot.docs) HouseHoldMemberData.fromDoc(doc)]));
       _setReadyOf("memberData");
     }));
 
@@ -185,18 +191,17 @@ class HouseHold {
   }
 
   /// Completes the completer in [awaitReadyCompleter] with the given [key]
-  void _setReadyOf(String key){
+  void _setReadyOf(String key) {
     Completer? cmp = awaitReadyCompleter[key];
-    if(cmp == null || cmp.isCompleted) return;
+    if (cmp == null || cmp.isCompleted) return;
     cmp.complete();
     // if(awaitReadyCompleter[type]?.isCompleted) return;
   }
 
   /// Awaits all completers defined in [awaitReadyCompleter]
   void _awaitReady() async {
-    await Future.wait([
-      for(var completer in awaitReadyCompleter.values) completer.future
-    ]);
+    await Future.wait(
+        [for (var completer in awaitReadyCompleter.values) completer.future]);
     ready.complete();
   }
 
@@ -214,7 +219,6 @@ class HouseHold {
     return this;
   }
 
-
   /// Determines if the given [user] is an admin in this household
   bool isUserAdmin(AppUser user) {
     return memberDataOf(member: user).role == Role.ADMIN;
@@ -227,7 +231,8 @@ class HouseHold {
 
   /// Returns the member data of this household
   HouseHoldMemberData memberDataOf({required AppUser member}) {
-    return _memberData.value.firstWhereOrNull((mb) => mb.user.uid == member.uid) ??
+    return _memberData.value
+            .firstWhereOrNull((mb) => mb.user.uid == member.uid) ??
         HouseHoldMemberData.emptyOf(member);
   }
 
@@ -244,8 +249,8 @@ class HouseHold {
   /// Adjusts the [from] and [to] users paid/shouldPay amount to ...
   Future exchangeMoney(
       {required AppUser from,
-        required AppUser to,
-        required double amount}) async {
+      required AppUser to,
+      required double amount}) async {
     var fromMemberData = memberDataOf(member: from);
     var toMemberData = memberDataOf(member: to);
 
@@ -258,11 +263,18 @@ class HouseHold {
       firebaseService.updateMemberData(
           houseHold: this, memberData: toMemberData)
     ]);
+
+    await firebaseService.addAuditLogItem(
+      AuditLogItem.byMe(
+          type: AuditLogType.SEND_MONEY,
+          data: {"from": from.uid, "to": to.uid, "amount": amount}),
+      houseHoldId: id,
+    );
   }
 
   Future cancelAll() async {
     List<Future> futures = [
-      ..._subs.map((s)=>s.cancel()),
+      ..._subs.map((s) => s.cancel()),
       _memberData.close(),
       _activities.close(),
       _groups.close(),
@@ -299,12 +311,11 @@ class HouseHold {
     return _cache[id];
   }
 
-  static Future clearAll()async{
-    for(var cached in _cache.values){
-      await  cached.cancelAll();
+  static Future clearAll() async {
+    for (var cached in _cache.values) {
+      await cached.cancelAll();
     }
     _cache.clear();
-
   }
 
   @override

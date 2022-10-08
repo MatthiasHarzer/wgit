@@ -89,7 +89,7 @@ class _CreateOrEditGroupDialogState extends State<_CreateOrEditGroupDialog> {
 
     if (confirm) {
       await firebaseService.deleteGroup(
-          houseHoldId: houseHold.id, groupId: group.id);
+          houseHoldId: houseHold.id, group: group);
       _close();
     }
 

@@ -9,6 +9,8 @@ import 'package:wgit/util/consts.dart';
 
 import '../../types/activity.dart';
 import '../../types/app_user.dart';
+import '../../types/audit_log_item.dart';
+import '../../types/group.dart';
 import '../../types/household.dart';
 import '../../util/util.dart';
 import 'auth_service.dart';
@@ -24,7 +26,8 @@ class FirebaseService {
   FirebaseFirestore get _firestore => FirebaseFirestore.instance;
   bool _initialized = false;
 
-  final BehaviorSubject<List<HouseHold>> _households = BehaviorSubject.seeded([]);
+  final BehaviorSubject<List<HouseHold>> _households =
+      BehaviorSubject.seeded([]);
 
   Stream<List<HouseHold>> get availableHouseholds => _households.stream;
 
@@ -45,7 +48,6 @@ class FirebaseService {
   //   ]);
   // }
 
-
   /// Adds the given [user] to the given [houseHold], if the current user is an admin in the household
   Future addMember(HouseHold houseHold, AppUser user) async {
     if (!houseHold.thisUserIsAdmin) return;
@@ -58,6 +60,15 @@ class FirebaseService {
 
     await RefService.refOf(houseHoldId: houseHold.id)
         .update({"members": currentMembers});
+
+    await addAuditLogItem(
+        AuditLogItem.byMe(
+          type: AuditLogType.ADD_MEMBER,
+          data: {
+            "member": user.uid,
+          }
+        ),
+        houseHoldId: houseHold.id);
   }
 
   /// Promotes the given [member] int the given [houseHold]
@@ -70,8 +81,15 @@ class FirebaseService {
     await RefService.memberDataRefOf(houseHoldId: houseHold.id, uid: member.uid)
         .update({"role": Role.ADMIN});
 
-    // await RefService.refOf(houseHoldId: houseHold.id)
-    //     .update({"admins": admins.map((a) => a.uid).toList()});
+    await addAuditLogItem(
+        AuditLogItem.byMe(
+          type: AuditLogType.PROMOTE_MEMBER,
+          data: {
+            "promoted_member": member.uid,
+            "new_role": Role.ADMIN,
+          }
+        ),
+        houseHoldId: houseHold.id);
   }
 
   /// Deletes the household, including all sub collections
@@ -111,6 +129,15 @@ class FirebaseService {
 
     await RefService.refOf(houseHoldId: houseHold.id)
         .update({"members": members.map((a) => a.uid).toList()});
+
+    await addAuditLogItem(
+        AuditLogItem.byMe(
+          type: AuditLogType.REMOVE_MEMBER,
+          data: {
+            "member": member.uid
+          }
+        ),
+        houseHoldId: houseHold.id);
   }
 
   /// Adds a household with the current user as an admin
@@ -147,7 +174,7 @@ class FirebaseService {
     var ref = RefService.refOfActivities(houseHoldId: houseHold.id);
     var map = activity.toJson();
     map["timestamp"] = FieldValue.serverTimestamp();
-    await ref.add(map);
+    final doc = await ref.add(map);
 
     var relativeValue = activity.total / activity.contributions.keys.length;
 
@@ -166,6 +193,21 @@ class FirebaseService {
           currentMemberData.toJson());
     }
     await batch.commit();
+
+    final group = houseHold.findGroup(activity.groupId);
+
+    await addAuditLogItem(
+        AuditLogItem.byMe(
+          type: AuditLogType.ADD_ACTIVITY,
+          data: {
+            "id": doc.id,
+            "contributions": activity.contributions.map((key, value) => MapEntry(key.uid, value)),
+            "total": activity.total,
+            "group_id": activity.groupId,
+            "group_name": group?.name,
+          }
+        ),
+        houseHoldId: houseHold.id);
   }
 
   Future _editActivity(
@@ -199,6 +241,20 @@ class FirebaseService {
           currentMemberData.toJson());
     }
     await batch.commit();
+
+    final group = houseHold.findGroup(activity.groupId);
+
+    await addAuditLogItem(
+        AuditLogItem.byMe(
+            type: AuditLogType.EDIT_ACTIVITY,
+            data: {
+              "id": activity.id,
+              "contributions": activity.contributions.map((key, value) => MapEntry(key.uid, value)),
+              "total": activity.total,
+              "group_id": activity.groupId,
+              "group_name": group?.name,
+            }),
+        houseHoldId: houseHold.id);
   }
 
   /// Creates a new activity, or if the activity has an id, edits the existing one
@@ -226,19 +282,51 @@ class FirebaseService {
         "name": name,
         "members": members.map((m) => m.uid).toList(),
       });
+
+      await addAuditLogItem(
+          AuditLogItem.byMe(
+              type: AuditLogType.EDIT_GROUP,
+              data: {
+                "id": groupId,
+                "name": name,
+                "members": members.map((m)=>m.uid).toList(),
+              }),
+          houseHoldId: houseHoldId);
       return;
     }
 
-    await RefService.groupsRefOf(houseHoldId: houseHoldId).add({
+    final doc = await RefService.groupsRefOf(houseHoldId: houseHoldId).add({
       "name": name,
       "members": members.map((m) => m.uid).toList(),
     });
+    await addAuditLogItem(
+        AuditLogItem.byMe(
+          type: AuditLogType.ADD_GROUP,
+          data: {
+            "id": doc.id,
+            "name": name,
+            "members": members.map((m) => m.uid).toList(),
+
+          }
+        ),
+        houseHoldId: houseHoldId);
   }
 
   Future deleteGroup(
-      {required String houseHoldId, required String groupId}) async {
-    await RefService.groupRefOf(houseHoldId: houseHoldId, groupId: groupId)
+      {required String houseHoldId, required Group group}) async {
+    await RefService.groupRefOf(houseHoldId: houseHoldId, groupId: group.id)
         .delete();
+
+    await addAuditLogItem(
+        AuditLogItem.byMe(
+            type: AuditLogType.REMOVE_GROUP,
+            data:{
+              "id": group.id,
+              "name": group.name,
+              "members": group.members.map((m) => m.uid).toList(),
+            }),
+        houseHoldId: houseHoldId,
+    );
   }
 
   Future<String> createDynamicLinkFor({required AppUser user}) async {
@@ -294,6 +382,13 @@ class FirebaseService {
     if (uid == null) return null;
 
     return await AppUser.fromUid(uid);
+  }
+
+  Future addAuditLogItem(AuditLogItem log,
+      {required String houseHoldId}) async {
+    final logData = log.toJson();
+    logData["timestamp"] = FieldValue.serverTimestamp();
+    await RefService.auditLogRefOf(houseHoldId: houseHoldId).add(logData);
   }
 
   /// Modifies a users [displayName] and/or [photoURL]
