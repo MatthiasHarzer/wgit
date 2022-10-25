@@ -86,8 +86,9 @@ class AppUser {
 
   /// Resolved an user from a given [uid]
   static Future<AppUser?> fromUid(String uid) async {
+    if(uid.isEmpty) return null;
     if (_cache.containsKey(uid)) return _cache[uid]!;
-
+    // print("NOT EMPTY???: $uid");
     final ref = RefService.refOf(uid: uid);
 
     final completer = Completer<AppUser?>();

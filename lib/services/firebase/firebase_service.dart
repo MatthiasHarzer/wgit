@@ -80,7 +80,7 @@ class FirebaseService {
 
     await addAuditLogItem(
         AuditLogItem.byMe(type: AuditLogType.promoteMember, data: {
-          "members": member.uid,
+          "member": member.uid,
           "role": Role.ADMIN,
         }),
         houseHoldId: houseHold.id);

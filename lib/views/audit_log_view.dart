@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:wgit/types/audit_log_item.dart';
 import 'package:wgit/util/components.dart';
@@ -16,7 +18,9 @@ class _AuditLogViewItem extends StatefulWidget {
 
 class _AuditLogViewItemState extends State<_AuditLogViewItem> {
   AuditLogItem get log => widget.log;
-  List<String> text = [];
+  var text =  <String>[];
+
+  Completer<List<String>> _textCompleter = Completer();
 
   @override
   void initState() {
@@ -25,15 +29,14 @@ class _AuditLogViewItemState extends State<_AuditLogViewItem> {
   }
 
   void loadAsync() async {
-    text = await log.getText();
-
-    setState(() {
-
-    });
+    _textCompleter.complete(await log.getText());
   }
 
   @override
   Widget build(BuildContext context) {
+    _textCompleter = Completer(); // reinitiate the completer to capture live updates
+    loadAsync();  // Load the data every time the widget updates
+
     return Padding(
       padding: const EdgeInsets.only(top: 8.0),
       child: ListTile(
@@ -45,14 +48,29 @@ class _AuditLogViewItemState extends State<_AuditLogViewItem> {
               child: Icon(log.icon),
           ),
         ),
-        title: buildTextWithHighlights(
-            text,
-            startOdd: true,
-            defaultTextStle: TextStyle(
-              fontWeight: FontWeight.w500,
-              fontSize: 15,
-              color: Colors.grey[400],
-            ),
+        title: StatefulBuilder(
+          builder: ((context, setState){
+            /// Await the textCompleter to resolve the item text
+            void load()async{
+                text = await _textCompleter.future;
+                setState((){});
+            }
+
+            /// only wait for the textCompleter if it isn't completed, to prevent loops
+            if(!_textCompleter.isCompleted){
+              load();
+            }
+
+            return buildTextWithHighlights(
+              text,
+              startOdd: true,
+              defaultTextStle: TextStyle(
+                fontWeight: FontWeight.w500,
+                fontSize: 15,
+                color: Colors.grey[400],
+              ),
+            );
+          }),
         ),
         subtitle: Text(log.date.formatted),
       ),
@@ -82,6 +100,7 @@ class _AuditLogViewState extends State<AuditLogView> {
         stream: houseHold.auditLogStream,
         builder: (context, snapshot) {
           final items = snapshot.data ?? [];
+          print("update");
 
           return ListView(
             children: [for (var item in items) _AuditLogViewItem(log: item)],
