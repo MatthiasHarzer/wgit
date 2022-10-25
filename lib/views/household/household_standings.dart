@@ -132,10 +132,8 @@ class _HouseHoldStandingsItemState extends State<_HouseHoldStandingsItem> {
             trailing: IconButton(
               splashRadius: 25,
               tooltip: "Exchange Money",
-              icon: working
-                  ? const CircularProgressIndicator()
-                  : const Icon(Icons.payments),
-              onPressed: member.isSelf || working
+              icon: const Icon(Icons.payments),
+              onPressed: member.isSelf
                   ? null
                   : () {
                       _onSendMoneyTaped(member);

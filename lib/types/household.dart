@@ -23,7 +23,7 @@ class Role {
   static const ADMIN = "admin";
 
   static String get(String role) {
-    if (role == ADMIN) return ADMIN;
+    if (role.toLowerCase() == ADMIN.toLowerCase()) return ADMIN;
     return MEMBER;
   }
 }
@@ -33,7 +33,7 @@ class HouseHoldMemberData {
   late AppUser user;
   late double totalShouldPay;
   late double totalPaid;
-  String role = "member";
+  String role = Role.MEMBER;
 
   double get standing => totalPaid - totalShouldPay;
 
@@ -41,7 +41,7 @@ class HouseHoldMemberData {
       {required this.user,
       required this.totalShouldPay,
       required this.totalPaid,
-      this.role = "member"});
+      this.role = Role.MEMBER});
 
   HouseHoldMemberData.emptyOf(AppUser user) {
     user = user;
@@ -236,7 +236,8 @@ class HouseHold {
 
   /// Returns the role name depending on [isUserAdmin]
   String getUserRoleName(AppUser user) {
-    return isUserAdmin(user) ? "ADMIN" : "MEMBER";
+    return memberDataOf(member: user).role.toUpperCase();
+    // return isUserAdmin(user) ? "ADMIN" : "MEMBER";
   }
 
   /// Returns the member data of this household
