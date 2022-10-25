@@ -62,12 +62,9 @@ class FirebaseService {
         .update({"members": currentMembers});
 
     await addAuditLogItem(
-        AuditLogItem.byMe(
-          type: AuditLogType.addMember,
-          data: {
-            "member": user.uid,
-          }
-        ),
+        AuditLogItem.byMe(type: AuditLogType.addMember, data: {
+          "member": user.uid,
+        }),
         houseHoldId: houseHold.id);
   }
 
@@ -82,13 +79,10 @@ class FirebaseService {
         .update({"role": Role.ADMIN});
 
     await addAuditLogItem(
-        AuditLogItem.byMe(
-          type: AuditLogType.promoteMember,
-          data: {
-            "members": member.uid,
-            "role": Role.ADMIN,
-          }
-        ),
+        AuditLogItem.byMe(type: AuditLogType.promoteMember, data: {
+          "members": member.uid,
+          "role": Role.ADMIN,
+        }),
         houseHoldId: houseHold.id);
   }
 
@@ -132,11 +126,7 @@ class FirebaseService {
 
     await addAuditLogItem(
         AuditLogItem.byMe(
-          type: AuditLogType.removeMember,
-          data: {
-            "member": member.uid
-          }
-        ),
+            type: AuditLogType.removeMember, data: {"member": member.uid}),
         houseHoldId: houseHold.id);
   }
 
@@ -197,63 +187,106 @@ class FirebaseService {
     final group = houseHold.findGroup(activity.groupId);
 
     await addAuditLogItem(
-        AuditLogItem.byMe(
-          type: AuditLogType.addActivity,
-          data: {
-            "id": doc.id,
-            "contributions": activity.contributions.map((key, value) => MapEntry(key.uid, value)),
-            "total": activity.total,
-            "group_id": activity.groupId,
-            "group_name": group?.name,
-          }
-        ),
+        AuditLogItem.byMe(type: AuditLogType.addActivity, data: {
+          "id": doc.id,
+          "contributions": activity.contributions
+              .map((key, value) => MapEntry(key.uid, value)),
+          "total": activity.total,
+          "group_id": activity.groupId,
+          "group_name": group?.name,
+        }),
         houseHoldId: houseHold.id);
   }
 
   Future _editActivity(
       {required HouseHold houseHold, required Activity activity}) async {
     if (activity.contributions.keys.isEmpty) return;
-    var ref = RefService.refOfActivity(
+    final ref = RefService.refOfActivity(
         houseHoldId: houseHold.id, activityId: activity.id!);
 
-    var existingDoc = await ref.get();
-    var existingActivity = await Activity.fromDoc(existingDoc);
+    final existingDoc = await ref.get();
+    final existingActivity = await Activity.fromDoc(existingDoc);
 
-    var map = activity.toJson();
+    final map = activity.toJson();
     await ref.update(map);
 
-    var totalDelta = activity.total - existingActivity.total;
-    var relativeDeltaValue = totalDelta / activity.contributions.keys.length;
+    /// The effects on the users memberData (paid/shoudlPay)
+    Map<AppUser, List<double>> effects = {}; //AppUser: [paid, shouldPay]
 
-    var batch = _firestore.batch();
+
+    for (var entry in existingActivity.contributions.entries) {
+      final user = entry.key;
+      final value = entry.value;
+
+      /// "Undo" every users contribution
+      effects[user] = [
+        -value,
+        -existingActivity.perUserValue,
+      ];
+    }
 
     for (var entry in activity.contributions.entries) {
-      var user = entry.key;
-      var deltaContribution =
-          entry.value - existingActivity.getContributionOf(user);
+      final user = entry.key;
+      final value = entry.value;
 
-      var currentMemberData = houseHold.memberDataOf(member: user);
-      currentMemberData.totalPaid += deltaContribution;
-      currentMemberData.totalShouldPay += relativeDeltaValue;
+      if(!effects.containsKey(user)){
+        effects[user] = [0,0];
+      }
+
+      /// Add the new paid / shouldPay values from the activity
+      effects[user]![0] += value; //paid
+      effects[user]![1] += activity.perUserValue; //shouldPay
+    }
+
+    final batch = _firestore.batch();
+
+    /// Update the changes in the firestore as a batch to improve update speed
+    for(final effect in effects.entries){
+      final user = effect.key;
+      final paid = effect.value[0];
+      final shouldPay = effect.value[1];
+
+      final currentMemberData = houseHold.memberDataOf(member: user);
+
+      currentMemberData.totalPaid += paid;
+      currentMemberData.totalShouldPay += shouldPay;
 
       batch.set(
           RefService.memberDataRefOf(houseHoldId: houseHold.id, uid: user.uid),
           currentMemberData.toJson());
     }
+
+
+    // final totalDelta = activity.total - existingActivity.total;
+    // final relativeDeltaValue = totalDelta / activity.contributions.keys.length;
+    //
+    //
+    // for (var entry in activity.contributions.entries) {
+    //   var user = entry.key;
+    //   var deltaContribution =
+    //       entry.value - existingActivity.getContributionOf(user);
+    //
+    //   var currentMemberData = houseHold.memberDataOf(member: user);
+    //   currentMemberData.totalPaid += deltaContribution;
+    //   currentMemberData.totalShouldPay += relativeDeltaValue;
+    //
+    //   batch.set(
+    //       RefService.memberDataRefOf(houseHoldId: houseHold.id, uid: user.uid),
+    //       currentMemberData.toJson());
+    // }
     await batch.commit();
 
     final group = houseHold.findGroup(activity.groupId);
 
     await addAuditLogItem(
-        AuditLogItem.byMe(
-            type: AuditLogType.editActivity,
-            data: {
-              "id": activity.id,
-              "contributions": activity.contributions.map((key, value) => MapEntry(key.uid, value)),
-              "total": activity.total,
-              "group_id": activity.groupId,
-              "group_name": group?.name,
-            }),
+        AuditLogItem.byMe(type: AuditLogType.editActivity, data: {
+          "id": activity.id,
+          "contributions": activity.contributions
+              .map((key, value) => MapEntry(key.uid, value)),
+          "total": activity.total,
+          "group_id": activity.groupId,
+          "group_name": group?.name,
+        }),
         houseHoldId: houseHold.id);
   }
 
@@ -284,13 +317,11 @@ class FirebaseService {
       });
 
       await addAuditLogItem(
-          AuditLogItem.byMe(
-              type: AuditLogType.editGroup,
-              data: {
-                "id": groupId,
-                "name": name,
-                "members": members.map((m)=>m.uid).toList(),
-              }),
+          AuditLogItem.byMe(type: AuditLogType.editGroup, data: {
+            "id": groupId,
+            "name": name,
+            "members": members.map((m) => m.uid).toList(),
+          }),
           houseHoldId: houseHoldId);
       return;
     }
@@ -300,15 +331,11 @@ class FirebaseService {
       "members": members.map((m) => m.uid).toList(),
     });
     await addAuditLogItem(
-        AuditLogItem.byMe(
-          type: AuditLogType.addGroup,
-          data: {
-            "id": doc.id,
-            "name": name,
-            "members": members.map((m) => m.uid).toList(),
-
-          }
-        ),
+        AuditLogItem.byMe(type: AuditLogType.addGroup, data: {
+          "id": doc.id,
+          "name": name,
+          "members": members.map((m) => m.uid).toList(),
+        }),
         houseHoldId: houseHoldId);
   }
 
@@ -318,14 +345,12 @@ class FirebaseService {
         .delete();
 
     await addAuditLogItem(
-        AuditLogItem.byMe(
-            type: AuditLogType.removeGroup,
-            data:{
-              "id": group.id,
-              "name": group.name,
-              "members": group.members.map((m) => m.uid).toList(),
-            }),
-        houseHoldId: houseHoldId,
+      AuditLogItem.byMe(type: AuditLogType.removeGroup, data: {
+        "id": group.id,
+        "name": group.name,
+        "members": group.members.map((m) => m.uid).toList(),
+      }),
+      houseHoldId: houseHoldId,
     );
   }
 

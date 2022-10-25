@@ -302,6 +302,9 @@ class _EditOrNewActivityState extends State<EditOrNewActivity> {
                                 options: groups,
                                 onChanged: (g) => setState(() {
                                   selectedGroup = g;
+
+                                  /// Remove members which are not in the group and didn't contribute anything
+                                  _contributions.removeWhere((user, value) => value == 0 && !selectedGroup.members.contains(user));
                                 }),
                                 placeHolder: "GORUP",
                             );

@@ -18,6 +18,7 @@ class Activity {
   String? groupId;
 
   double get total => contributions.values.fold(0, (p, c) => p + c);
+  double get perUserValue => total / contributions.keys.length;
 
   double getContributionOf(AppUser user) {
     return contributions[user] ?? 0;
